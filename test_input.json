@@ -1,118 +1,107 @@
 {
   "input": {
-    "images": [
-      {
-        "name": "test.png",
-        "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAMklEQVR4nGI5ZdXAQEvARFPTRy0YtWDUglELRi0YtWDUglELRi0YtWDUAioCQAAAAP//E24Bx3jUKuYAAAAASUVORK5CYII="
-      }
-    ],
     "workflow": {
+      "3": {
+        "inputs": {
+          "seed": 42,
+          "steps": 20,
+          "cfg": 5,
+          "sampler_name": "uni_pc",
+          "scheduler": "simple",
+          "denoise": 1,
+          "model": ["48", 0],
+          "positive": ["6", 0],
+          "negative": ["7", 0],
+          "latent_image": ["55", 0]
+        },
+        "class_type": "KSampler",
+        "_meta": { "title": "KSampler" }
+      },
       "6": {
         "inputs": {
-          "text": "anime cat with massive fluffy fennec ears and a big fluffy tail blonde messy long hair blue eyes wearing a construction outfit placing a fancy black forest cake with candles on top of a dinner table of an old dark Victorian mansion lit by candlelight with a bright window to the foggy forest and very expensive stuff everywhere there are paintings on the walls",
-          "clip": ["30", 1]
+          "text": "a red fox walking through a snowy forest, golden hour lighting, cinematic",
+          "clip": ["38", 0]
         },
         "class_type": "CLIPTextEncode",
-        "_meta": {
-          "title": "CLIP Text Encode (Positive Prompt)"
-        }
+        "_meta": { "title": "CLIP Text Encode (Positive Prompt)" }
+      },
+      "7": {
+        "inputs": {
+          "text": "blurry, low quality, static, overexposed, watermark",
+          "clip": ["38", 0]
+        },
+        "class_type": "CLIPTextEncode",
+        "_meta": { "title": "CLIP Text Encode (Negative Prompt)" }
       },
       "8": {
         "inputs": {
-          "samples": ["31", 0],
-          "vae": ["30", 2]
+          "samples": ["3", 0],
+          "vae": ["39", 0]
         },
         "class_type": "VAEDecode",
-        "_meta": {
-          "title": "VAE Decode"
-        }
+        "_meta": { "title": "VAE Decode" }
       },
-      "9": {
+      "37": {
         "inputs": {
-          "filename_prefix": "ComfyUI",
-          "images": ["8", 0]
+          "unet_name": "wan2.2_ti2v_5B_fp16.safetensors",
+          "weight_dtype": "default"
         },
-        "class_type": "SaveImage",
-        "_meta": {
-          "title": "Save Image"
-        }
-      },
-      "27": {
-        "inputs": {
-          "width": 512,
-          "height": 512,
-          "batch_size": 1
-        },
-        "class_type": "EmptySD3LatentImage",
-        "_meta": {
-          "title": "EmptySD3LatentImage"
-        }
-      },
-      "30": {
-        "inputs": {
-          "ckpt_name": "flux1-dev-fp8.safetensors"
-        },
-        "class_type": "CheckpointLoaderSimple",
-        "_meta": {
-          "title": "Load Checkpoint"
-        }
-      },
-      "31": {
-        "inputs": {
-          "seed": 243057879077961,
-          "steps": 10,
-          "cfg": 1,
-          "sampler_name": "euler",
-          "scheduler": "simple",
-          "denoise": 1,
-          "model": ["30", 0],
-          "positive": ["35", 0],
-          "negative": ["33", 0],
-          "latent_image": ["27", 0]
-        },
-        "class_type": "KSampler",
-        "_meta": {
-          "title": "KSampler"
-        }
-      },
-      "33": {
-        "inputs": {
-          "text": "",
-          "clip": ["30", 1]
-        },
-        "class_type": "CLIPTextEncode",
-        "_meta": {
-          "title": "CLIP Text Encode (Negative Prompt)"
-        }
-      },
-      "35": {
-        "inputs": {
-          "guidance": 3.5,
-          "conditioning": ["6", 0]
-        },
-        "class_type": "FluxGuidance",
-        "_meta": {
-          "title": "FluxGuidance"
-        }
+        "class_type": "UNETLoader",
+        "_meta": { "title": "Load Diffusion Model" }
       },
       "38": {
         "inputs": {
-          "images": ["8", 0]
+          "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+          "type": "wan",
+          "device": "default"
         },
-        "class_type": "PreviewImage",
-        "_meta": {
-          "title": "Preview Image"
-        }
+        "class_type": "CLIPLoader",
+        "_meta": { "title": "Load CLIP" }
       },
-      "40": {
+      "39": {
         "inputs": {
-          "filename_prefix": "ComfyUI",
+          "vae_name": "wan2.2_vae.safetensors"
+        },
+        "class_type": "VAELoader",
+        "_meta": { "title": "Load VAE" }
+      },
+      "48": {
+        "inputs": {
+          "shift": 8,
+          "model": ["37", 0]
+        },
+        "class_type": "ModelSamplingSD3",
+        "_meta": { "title": "ModelSamplingSD3" }
+      },
+      "55": {
+        "inputs": {
+          "width": 832,
+          "height": 480,
+          "length": 81,
+          "batch_size": 1,
+          "vae": ["39", 0]
+        },
+        "class_type": "Wan22ImageToVideoLatent",
+        "_meta": { "title": "Wan22ImageToVideoLatent" }
+      },
+      "57": {
+        "inputs": {
+          "fps": 16,
+          "bit_depth": 8,
           "images": ["8", 0]
         },
-        "class_type": "SaveImage",
-        "_meta": {
-          "title": "Save Image"
-        }
+        "class_type": "CreateVideo",
+        "_meta": { "title": "Create Video" }
+      },
+      "58": {
+        "inputs": {
+          "filename_prefix": "video/ComfyUI",
+          "format": "auto",
+          "codec": "auto",
+          "video": ["57", 0]
+        },
+        "class_type": "SaveVideo",
+        "_meta": { "title": "Save Video" }
       }
     }
   }
