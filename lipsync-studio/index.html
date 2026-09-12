@@ -11,7 +11,8 @@
 <header class="topbar">
   <h1>Lip Sync Studio</h1>
   <nav class="tabs" id="tabs">
-    <button class="tab active" data-tab="character">Character</button>
+    <button class="tab active" data-tab="script">Script</button>
+    <button class="tab" data-tab="character">Character</button>
     <button class="tab" data-tab="shot">Shot &amp; FX</button>
   </nav>
   <div class="spacer"></div>
@@ -22,9 +23,20 @@
 
 <main class="layout">
   <aside class="panel left">
-    <!-- ============================================ CHARACTER TAB (left) -->
-    <section data-tab="character">
-      <h2>Cast</h2>
+    <!-- =============================================== SCRIPT TAB (left) -->
+    <section data-tab="script">
+      <h2>Scene</h2>
+      <label class="field">Title <input type="text" id="sceneTitle" placeholder="Scene 1"></label>
+      <div class="row"><button id="loadSampleBackdrop2">Sample boulevard</button></div>
+      <label class="ghost filebtn block">
+        Where it takes place (image or video)…
+        <input type="file" id="backdropFile2" accept="image/*,video/*" hidden>
+      </label>
+      <p class="hint" id="sceneInfo">Plan the scene first — who is in it, when they are on screen, and what they say. Block the movement afterwards.</p>
+    </section>
+
+    <section data-tab="script">
+      <h2>Who is in it</h2>
       <label class="field">Character <select id="pickRole"></select></label>
       <label class="field">Outfit <select id="pickOutfit"></select></label>
       <label class="field">Skin tone <select id="pickTone"></select></label>
@@ -40,37 +52,48 @@
         Upgrade selected character's art…
         <input type="file" id="upgradeRig" multiple webkitdirectory directory hidden>
       </label>
-      <p class="hint">
-        Start with 4 front mouths (<code>closed</code>, <code>open</code>,
-        <code>wide</code>, <code>round</code>). Add angles or shapes later with
-        Upgrade — placement, keys and audio are kept.
-      </p>
-      <p class="hint">
-        Name files <code>front_body.png</code>, <code>front_mouth_AI.png</code>,
-        <code>side_body.png</code>… or include a <code>rig.json</code>.
-        Angles: front, three_quarter, side, back.
-      </p>
       <ul id="castList" class="cast"></ul>
+      <h3>On screen</h3>
+      <div class="row">
+        <button id="presenceEnter">Enter here</button>
+        <button id="presenceExit">Exit here</button>
+      </div>
+      <div class="row"><button id="presenceAlways" class="ghost">Always on screen</button></div>
+      <p class="hint" id="presenceInfo">Always on screen.</p>
     </section>
 
+    <section data-tab="script">
+      <h2>What they say</h2>
+      <div class="row"><button id="addLine" class="primary">Add line at playhead</button></div>
+      <ul id="lineList" class="cast"></ul>
+      <p class="hint" id="lineInfo">No dialogue yet.</p>
+    </section>
+
+    <section data-tab="script">
+      <h2>Camera plan</h2>
+      <label class="field">From playhead, camera
+        <select id="segMode"></select>
+      </label>
+      <label class="field">Follows <select id="segTarget"></select></label>
+      <div class="row">
+        <button id="addSegment">Add camera change</button>
+        <button id="clearSegments" class="ghost">Clear</button>
+      </div>
+      <p class="hint" id="segInfo">No camera plan — manual keyframes are in charge.</p>
+    </section>
+
+    <!-- ============================================ CHARACTER TAB (left) -->
     <section data-tab="character">
-      <h2>Dialogue</h2>
-      <label class="ghost filebtn block">
-        Load audio for selected character…
-        <input type="file" id="audioFile" accept="audio/*" hidden>
-      </label>
-      <label class="field">Transcript (optional, improves mouth shapes)
-        <textarea id="transcript" rows="3" placeholder="Type what they say…"></textarea>
-      </label>
-      <label class="field">Sensitivity
-        <input type="range" id="sensitivity" min="0.4" max="2.5" step="0.05" value="1">
-        <output id="sensitivityOut">1.00</output>
-      </label>
-      <label class="field">Clip start (s)
-        <input type="number" id="audioOffset" min="0" step="0.05" value="0">
-      </label>
-      <button id="reanalyze">Re-analyze</button>
-      <p class="hint" id="audioInfo">No audio loaded.</p>
+      <h2>Cast</h2>
+      <ul id="castList2" class="cast"></ul>
+      <p class="hint">
+        Add characters on the Script tab. Here you fit their art, mouths and walk.
+      </p>
+      <p class="hint">
+        Imported art: name files <code>front_body.png</code>,
+        <code>front_mouth_AI.png</code>, <code>side_body.png</code>… or include a
+        <code>rig.json</code>. Angles: front, three_quarter, side, back.
+      </p>
     </section>
 
     <!-- ================================================= SHOT TAB (left) -->
@@ -120,6 +143,8 @@
   <section class="stagewrap">
     <div class="canvasbox"><canvas id="stage" width="1280" height="720"></canvas></div>
 
+    <div class="timelinebox"><canvas id="timeline"></canvas></div>
+
     <div class="transport">
       <button id="playBtn" class="primary">Play</button>
       <input type="range" id="scrub" min="0" max="10" step="0.01" value="0">
@@ -147,6 +172,38 @@
   </section>
 
   <aside class="panel right">
+    <!-- ============================================== SCRIPT TAB (right) -->
+    <section data-tab="script">
+      <h2>Selected line</h2>
+      <p class="hint" id="noLineSelection">Nothing selected. Add a line, or click one on the timeline.</p>
+      <div id="lineInspector" hidden>
+        <label class="field">Who speaks <select id="lineActor"></select></label>
+        <label class="field">What they say
+          <textarea id="lineText" rows="3" placeholder="Type the line…"></textarea>
+        </label>
+        <label class="field">Start (s) <input type="number" id="lineStart" min="0" step="0.05"></label>
+        <label class="field">Length (s) <input type="number" id="lineLength" min="0.1" step="0.05"></label>
+        <label class="ghost filebtn block">
+          Load audio for this line…
+          <input type="file" id="lineAudio" accept="audio/*" hidden>
+        </label>
+        <label class="field">Voice filter <select id="lineVoice"></select></label>
+        <label class="field">Extra pitch (semitones)
+          <input type="range" id="linePitch" min="-12" max="12" step="1" value="0">
+          <output id="linePitchOut">0</output>
+        </label>
+        <label class="field">Mouth sensitivity
+          <input type="range" id="sensitivity" min="0.4" max="2.5" step="0.05" value="1">
+          <output id="sensitivityOut">1.00</output>
+        </label>
+        <div class="row">
+          <button id="reanalyze">Re-analyze</button>
+          <button id="deleteLine" class="danger">Delete</button>
+        </div>
+        <p class="hint" id="audioInfo">No audio on this line.</p>
+      </div>
+    </section>
+
     <!-- =========================================== CHARACTER TAB (right) -->
     <section data-tab="character">
       <h2>Selected character</h2>

@@ -180,3 +180,11 @@ progress { width: 140px; accent-color: var(--accent); }
   border: 1px solid var(--line);
   border-radius: 6px;
 }
+
+.timelinebox {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.timelinebox canvas { display: block; width: 100%; }

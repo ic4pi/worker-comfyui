@@ -19,6 +19,12 @@ import {
   FX_TYPES, fxType, makeClip, applyCameraFx, renderOverlayFx, fxAudioSources,
   fxDuration,
 } from "./fx.js";
+import {
+  inRanges, activeLine, linesFor, CAMERA_MODES, directCamera, applyTagAlong,
+  captureTagOffsets, planDuration,
+} from "./scene.js";
+import { createTimeline } from "./timeline.js";
+import { VOICE_PRESETS, applyVoice } from "./voice.js";
 
 const $ = (id) => document.getElementById(id);
 const canvas = $("stage");
@@ -37,10 +43,109 @@ const state = {
   fx: [],
   selectedFx: null,
   sfxBank: [],
+  lines: [],
+  selectedLine: null,
+  cameraSegments: [],
   audioCtx: null,
   playingSources: [],
   nextActorId: 1,
 };
+
+// ----------------------------------------------------------------- timeline
+
+let timeline = null;
+
+/** Describe the whole plan as lanes of clips for the timeline widget. */
+function timelineModel() {
+  const lanes = [];
+  for (const actor of stage.actors) {
+    const clips = [];
+    (actor.presence || []).forEach((range, i) => {
+      clips.push({
+        id: `presence:${i}`, start: range.start, duration: Math.max(0.1, range.end - range.start),
+        color: "#2f4a63", label: "on screen", ghost: true, ref: range, kind: "presence",
+      });
+    });
+    for (const line of linesFor(state.lines, actor.id)) {
+      clips.push({
+        id: line.id, start: line.start, duration: line.duration,
+        color: line.audio ? "#4f9d69" : "#6b7684",
+        label: line.text || "line", ref: line, kind: "line",
+      });
+    }
+    lanes.push({ id: `actor:${actor.id}`, label: actor.name, clips });
+  }
+
+  // Camera segments run until the next one starts, so they read as a strip.
+  const segs = [...state.cameraSegments].sort((a, b) => a.start - b.start);
+  lanes.push({
+    id: "camera",
+    label: "Camera",
+    clips: segs.map((seg, i) => ({
+      id: seg.id,
+      start: seg.start,
+      duration: Math.max(0.2, (segs[i + 1]?.start ?? state.duration) - seg.start),
+      color: seg.mode === "follow" ? "#b8546b" : seg.mode === "fixed" ? "#8a6ba8" : "#4a5464",
+      label: seg.mode === "follow"
+        ? `follow ${stage.actors.find((a) => a.id === seg.target)?.name || "?"}`
+        : seg.mode,
+      fixedLength: true, ref: seg, kind: "segment",
+    })),
+  });
+
+  lanes.push({
+    id: "fx",
+    label: "Effects",
+    clips: state.fx.map((clip) => ({
+      id: clip.id, start: clip.start, duration: clip.duration,
+      color: fxType(clip.type)?.kind === "audio" ? "#d8a12a" : "#5ad1ff",
+      label: clip.params.text || fxType(clip.type)?.name || clip.type,
+      ref: clip, kind: "fx",
+    })),
+  });
+
+  return { duration: state.duration, time: state.time, lanes };
+}
+
+function setupTimeline() {
+  timeline = createTimeline($("timeline"), {
+    onScrub: (t) => {
+      pause();
+      renderAt(t);
+    },
+    onSelect: (lane, clip) => {
+      if (clip.kind === "line") selectLine(clip.ref);
+      else if (clip.kind === "fx") {
+        selectFx(clip.ref);
+        showTab("shot");
+      } else if (clip.kind === "segment") {
+        $("segMode").value = clip.ref.mode;
+        if (clip.ref.target) $("segTarget").value = clip.ref.target;
+        state.selectedSegment = clip.ref;
+      } else if (clip.kind === "presence") {
+        const actor = stage.actors.find((a) => `actor:${a.id}` === lane.id);
+        if (actor) select(actor);
+      }
+    },
+    onClipChange: (lane, clip, next) => {
+      const ref = clip.ref;
+      if (clip.kind === "presence") {
+        ref.end = next.start + next.duration;
+        ref.start = next.start;
+      } else {
+        ref.start = next.start;
+        if (!clip.fixedLength) ref.duration = next.duration;
+      }
+      render();
+    },
+    onClipCommit: () => {
+      refreshLineList();
+      refreshFxList();
+      refreshDuration();
+      render();
+    },
+  });
+}
 
 // --------------------------------------------------------------------- tabs
 
@@ -66,15 +171,37 @@ let lastPoses = [];
 
 function renderAt(t, options = {}) {
   state.time = Math.min(state.duration, Math.max(0, t));
-  syncBackdropVideo(stage, state.time, options.videoPlaying ?? state.playing);
-  const cam = evalCamera(state.cameraKeys, state.time, stage.camera);
-  if (state.cameraKeys.length) Object.assign(stage.camera, cam);
-  applyCameraFx(stage, state.fx, state.time);
-  lastPoses = evaluateScene(stage, state.time, { holdFps: state.holdFps });
+  const now = state.time;
+  syncBackdropVideo(stage, now, options.videoPlaying ?? state.playing);
+
+  // The script decides who is on screen and who is talking, before any
+  // animation is evaluated.
+  for (const actor of stage.actors) {
+    actor.visible = inRanges(actor.presence, now);
+    const line = activeLine(state.lines, actor.id, now);
+    actor.track = line?.track || null;
+    actor.audioOffset = line?.start || 0;
+  }
+
+  // Poses are camera-independent, so they can be resolved first and then used
+  // to aim the camera at whoever it is following.
+  lastPoses = evaluateScene(stage, now, { holdFps: state.holdFps });
+
+  const manual = evalCamera(state.cameraKeys, now, stage.camera);
+  if (state.cameraKeys.length) Object.assign(stage.camera, manual);
+  const directed = directCamera(stage, state.cameraSegments, lastPoses,
+                                { ...stage.camera }, now, state.duration);
+  Object.assign(stage.camera, directed);
+  applyTagAlong(stage, state.cameraSegments, lastPoses, now, state.duration);
+
+  // Shakes and punches ride on top of whatever the camera was already doing.
+  applyCameraFx(stage, state.fx, now);
+
   renderFrame(stage, lastPoses);
-  renderOverlayFx(stage, state.fx, state.time);
-  $("timeNow").textContent = state.time.toFixed(2);
-  $("scrub").value = String(state.time);
+  renderOverlayFx(stage, state.fx, now);
+  $("timeNow").textContent = now.toFixed(2);
+  $("scrub").value = String(now);
+  if (timeline) timeline.setModel(timelineModel());
 }
 
 function render() {
@@ -104,15 +231,14 @@ function stopAudio() {
 function startAudio(fromTime) {
   const ctx = audioContext();
   ctx.resume();
-  for (const actor of stage.actors) {
-    if (!actor.audio) continue;
-    const offset = actor.audioOffset || 0;
-    const end = offset + actor.audio.buffer.duration;
-    if (end <= fromTime) continue;
+  for (const line of state.lines) {
+    if (!line.audio) continue;
+    if (line.start + line.audio.buffer.duration <= fromTime) continue;
     const src = ctx.createBufferSource();
-    src.buffer = actor.audio.buffer;
+    src.buffer = line.audio.buffer;
     src.connect(ctx.destination);
-    src.start(ctx.currentTime + Math.max(0, offset - fromTime), Math.max(0, fromTime - offset));
+    src.start(ctx.currentTime + Math.max(0, line.start - fromTime),
+              Math.max(0, fromTime - line.start));
     state.playingSources.push(src);
   }
   for (const clip of fxAudioSources(state.fx)) {
@@ -182,6 +308,9 @@ function makeActor(rig) {
     audio: null,
     audioOffset: 0,
     track: null,
+    // Empty presence means "always on screen" until the script says otherwise.
+    presence: [],
+    tagAlong: false,
     visible: true,
   };
 }
@@ -203,20 +332,26 @@ function select(actor) {
   state.selected = actor;
   refreshCast();
   refreshInspector();
+  refreshPresence();
 }
 
 function refreshCast() {
-  const list = $("castList");
-  list.innerHTML = "";
-  for (const actor of stage.actors) {
-    const li = document.createElement("li");
-    li.className = actor === state.selected ? "selected" : "";
-    li.innerHTML = `<span class="name"></span><span class="tag"></span>`;
-    li.querySelector(".name").textContent = actor.name;
-    li.querySelector(".tag").textContent = actor.audio ? "audio" : "silent";
-    li.addEventListener("click", () => select(actor));
-    list.appendChild(li);
+  for (const id of ["castList", "castList2"]) {
+    const list = $(id);
+    if (!list) continue;
+    list.innerHTML = "";
+    for (const actor of stage.actors) {
+      const spoken = linesFor(state.lines, actor.id).length;
+      const li = document.createElement("li");
+      li.className = actor === state.selected ? "selected" : "";
+      li.innerHTML = '<span class="name"></span><span class="tag"></span>';
+      li.querySelector(".name").textContent = actor.name;
+      li.querySelector(".tag").textContent = spoken ? `${spoken} line${spoken === 1 ? "" : "s"}` : "silent";
+      li.addEventListener("click", () => select(actor));
+      list.appendChild(li);
+    }
   }
+  refreshSegmentPickers();
 }
 
 function refreshInspector() {
@@ -243,7 +378,6 @@ function refreshInspector() {
   $("stepHzOut").textContent = (actor.walk?.stepHz ?? 2.2).toFixed(2);
   $("bobUnits").value = String(actor.walk?.bobUnits ?? 0.055);
   $("bobUnitsOut").textContent = (actor.walk?.bobUnits ?? 0.055).toFixed(3);
-  $("audioOffset").value = String(actor.audioOffset || 0);
   $("keyInfo").textContent = `${actor.keys.length} position key${actor.keys.length === 1 ? "" : "s"}`;
 
   const angles = availableAngles(actor.rig);
@@ -257,10 +391,6 @@ function refreshInspector() {
     ? `${label} rig — ${cover.angles} angle(s), ${cover.fewestMouths} mouth shapes. Next: ${cover.next[0]}`
     : `${label} rig — ${cover.angles} angles, ${cover.fewestMouths} mouth shapes. Nothing missing.`;
 
-  $("audioInfo").textContent = actor.audio
-    ? `${actor.audio.name} — ${actor.audio.buffer.duration.toFixed(2)}s, ${actor.track.frames.length} viseme frames`
-    : "No audio on this character.";
-  $("transcript").value = actor.transcript || "";
 }
 
 /** Fill a <select> from [value, label] pairs. */
@@ -324,6 +454,7 @@ function refreshMouthFit() {
 
 function refreshDuration() {
   const needed = Math.max(sceneDuration(stage, state.cameraKeys), fxDuration(state.fx),
+                          planDuration(state.lines, state.cameraSegments),
                           Number($("duration").value) || 1);
   state.duration = needed;
   $("duration").value = needed.toFixed(1);
@@ -402,6 +533,185 @@ $("actorKit").addEventListener("change", async (e) => {
   render();
   status(`${actor.name}: ${actor.mouthKitId || "own art only"}.`);
 });
+
+// --------------------------------------------------------------------- script
+
+$("sceneTitle").addEventListener("input", (e) => {
+  state.sceneTitle = e.target.value;
+});
+
+function presenceText(actor) {
+  if (!actor) return "";
+  if (!actor.presence?.length) return "Always on screen.";
+  return actor.presence
+    .map((r) => `${r.start.toFixed(1)}–${r.end.toFixed(1)}s`)
+    .join(", ");
+}
+
+$("presenceEnter").addEventListener("click", () => {
+  const actor = state.selected;
+  if (!actor) return;
+  actor.presence = actor.presence || [];
+  // An open range runs to the end of the scene until an exit closes it.
+  actor.presence.push({ start: state.time, end: state.duration });
+  refreshPresence();
+  render();
+});
+
+$("presenceExit").addEventListener("click", () => {
+  const actor = state.selected;
+  if (!actor?.presence?.length) return;
+  const open = [...actor.presence].reverse().find((r) => r.start <= state.time);
+  if (open) open.end = Math.max(open.start + 0.1, state.time);
+  refreshPresence();
+  render();
+});
+
+$("presenceAlways").addEventListener("click", () => {
+  if (!state.selected) return;
+  state.selected.presence = [];
+  refreshPresence();
+  render();
+});
+
+function refreshPresence() {
+  $("presenceInfo").textContent = presenceText(state.selected);
+}
+
+// --- dialogue lines ----------------------------------------------------------
+
+function newLine(actorId) {
+  return {
+    id: `line_${Math.random().toString(36).slice(2, 9)}`,
+    actorId,
+    text: "",
+    start: state.time,
+    duration: 2,
+    voice: "none",
+    pitch: 0,
+    audio: null,
+    rawBuffer: null,
+    track: null,
+  };
+}
+
+$("addLine").addEventListener("click", () => {
+  const actor = state.selected || stage.actors[0];
+  if (!actor) {
+    status("Add a character first.", true);
+    return;
+  }
+  const line = newLine(actor.id);
+  state.lines.push(line);
+  selectLine(line);
+  refreshLineList();
+  refreshDuration();
+  render();
+});
+
+function selectLine(line) {
+  state.selectedLine = line;
+  refreshLineList();
+  refreshLineInspector();
+}
+
+function refreshLineList() {
+  const list = $("lineList");
+  list.innerHTML = "";
+  for (const line of [...state.lines].sort((a, b) => a.start - b.start)) {
+    const actor = stage.actors.find((a) => a.id === line.actorId);
+    const li = document.createElement("li");
+    li.className = line === state.selectedLine ? "selected" : "";
+    li.innerHTML = '<span class="name"></span><span class="when"></span>';
+    li.querySelector(".name").textContent =
+      `${actor ? actor.name.split(" —")[0] : "?"}: ${line.text || "(no text)"}`;
+    li.querySelector(".when").textContent = line.audio ? `${line.start.toFixed(1)}s` : `${line.start.toFixed(1)}s ·`;
+    li.addEventListener("click", () => {
+      selectLine(line);
+      renderAt(line.start);
+    });
+    list.appendChild(li);
+  }
+  $("lineInfo").textContent = state.lines.length
+    ? `${state.lines.length} line${state.lines.length === 1 ? "" : "s"}.`
+    : "No dialogue yet.";
+}
+
+function refreshLineInspector() {
+  const line = state.selectedLine;
+  $("lineInspector").hidden = !line;
+  $("noLineSelection").hidden = Boolean(line);
+  if (!line) return;
+  fillOptions($("lineActor"), stage.actors.map((a) => [a.id, a.name]), line.actorId);
+  $("lineText").value = line.text;
+  $("lineStart").value = line.start.toFixed(2);
+  $("lineLength").value = line.duration.toFixed(2);
+  $("linePitch").value = String(line.pitch || 0);
+  $("linePitchOut").textContent = String(line.pitch || 0);
+  fillOptions($("lineVoice"), VOICE_PRESETS.map((v) => [v.id, v.name]), line.voice);
+  $("audioInfo").textContent = line.audio
+    ? `${line.audio.name} — ${line.audio.buffer.duration.toFixed(2)}s, ${line.track?.frames.length ?? 0} viseme frames`
+    : "No audio on this line. It will still hold the character's place in the script.";
+}
+
+function bindLine(id, apply) {
+  $(id).addEventListener("input", (e) => {
+    if (!state.selectedLine) return;
+    apply(state.selectedLine, e.target);
+    refreshLineList();
+    refreshDuration();
+    render();
+  });
+}
+bindLine("lineText", (l, el) => { l.text = el.value; });
+bindLine("lineStart", (l, el) => { l.start = Math.max(0, Number(el.value) || 0); });
+bindLine("lineLength", (l, el) => { l.duration = Math.max(0.1, Number(el.value) || 0.1); });
+bindLine("lineActor", (l, el) => { l.actorId = el.value; });
+
+$("deleteLine").addEventListener("click", () => {
+  if (!state.selectedLine) return;
+  state.lines = state.lines.filter((l) => l !== state.selectedLine);
+  selectLine(null);
+  refreshLineList();
+  render();
+});
+
+// --- camera plan -------------------------------------------------------------
+
+function refreshSegmentPickers() {
+  fillOptions($("segMode"), CAMERA_MODES.map((m) => [m.id, m.name]), $("segMode").value || "follow");
+  fillOptions($("segTarget"), stage.actors.map((a) => [a.id, a.name]), $("segTarget").value);
+}
+
+$("addSegment").addEventListener("click", () => {
+  const mode = $("segMode").value;
+  const segment = {
+    id: `cam_${Math.random().toString(36).slice(2, 9)}`,
+    start: state.time,
+    mode,
+    target: mode === "follow" ? $("segTarget").value : null,
+    zoom: stage.camera.zoom,
+    camera: mode === "fixed" ? { ...stage.camera } : null,
+    blend: 0.6,
+  };
+  state.cameraSegments.push(segment);
+  captureTagOffsets(stage, state.cameraSegments, lastPoses, state.time);
+  refreshSegmentInfo();
+  render();
+  status(`Camera ${mode === "follow" ? `follows ${$("segTarget").selectedOptions[0]?.textContent}` : mode} from ${state.time.toFixed(1)}s.`);
+});
+
+$("clearSegments").addEventListener("click", () => {
+  state.cameraSegments = [];
+  refreshSegmentInfo();
+  render();
+});
+
+function refreshSegmentInfo() {
+  $("segInfo").textContent = state.cameraSegments.length
+    ? `${state.cameraSegments.length} camera change${state.cameraSegments.length === 1 ? "" : "s"} — drag them on the timeline.`
+    : "No camera plan — manual keyframes are in charge.";
+}
 
 // ------------------------------------------------------------------- effects
 
@@ -742,6 +1052,14 @@ $("loadSampleBackdrop").addEventListener("click", async () => {
   }
 });
 
+$("loadSampleBackdrop2").addEventListener("click", () => $("loadSampleBackdrop").click());
+$("backdropFile2").addEventListener("change", (e) => {
+  // The Script tab offers the same backdrop pickers as the Shot tab.
+  const input = $("backdropFile");
+  input.files = e.target.files;
+  input.dispatchEvent(new Event("change"));
+});
+
 $("backdropFile").addEventListener("change", async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
@@ -805,54 +1123,86 @@ $("guides").addEventListener("change", (e) => {
   render();
 });
 
-// --- dialogue ---------------------------------------------------------------
+// --- dialogue audio ---------------------------------------------------------
 
-async function analyzeForSelected(file) {
-  const actor = state.selected;
-  if (!actor) {
-    status("Select a character first.", true);
-    return;
-  }
-  const ctx = audioContext();
-  const buffer = await ctx.decodeAudioData(await file.arrayBuffer());
-  actor.audio = { buffer, name: file.name };
-  runAnalysis(actor);
+/**
+ * Decode a file for a line, run the voice filter, analyse the result for lip
+ * sync, and size the line to the clip. The unfiltered buffer is kept so the
+ * filter can be changed without re-uploading.
+ */
+async function loadLineAudio(line, file) {
+  const buffer = await audioContext().decodeAudioData(await file.arrayBuffer());
+  line.rawBuffer = buffer;
+  line.audioName = file.name;
+  await applyLineVoice(line);
 }
 
-function runAnalysis(actor) {
-  if (!actor?.audio) return;
-  const sensitivity = Number($("sensitivity").value);
-  let track = analyzeAudio(actor.audio.buffer, { fps: 24, sensitivity });
-  actor.transcript = $("transcript").value.trim();
-  if (actor.transcript) track = applyTranscript(track, actor.transcript);
-  actor.track = track;
-  refreshCast();
-  refreshInspector();
+async function applyLineVoice(line) {
+  if (!line.rawBuffer) return;
+  const buffer = await applyVoice(line.rawBuffer, line.voice, { pitch: line.pitch || 0 });
+  line.audio = { buffer, name: line.audioName || "audio" };
+  line.duration = Math.max(0.1, buffer.duration);
+  analyseLine(line);
+}
+
+function analyseLine(line) {
+  if (!line.audio) return;
+  const sensitivity = Number($("sensitivity").value) || 1;
+  let track = analyzeAudio(line.audio.buffer, { fps: 24, sensitivity });
+  // The written line doubles as the transcript - no second field to fill in.
+  if (line.text.trim()) track = applyTranscript(track, line.text.trim());
+  line.track = track;
+  refreshLineList();
+  refreshLineInspector();
   refreshDuration();
   render();
-  status(`Analyzed ${actor.audio.name}: ${track.frames.length} frames.`);
 }
 
-$("audioFile").addEventListener("change", async (e) => {
+$("lineAudio").addEventListener("change", async (e) => {
   const file = e.target.files?.[0];
-  if (!file) return;
+  const line = state.selectedLine;
+  if (!file || !line) return;
   status("Decoding audio…");
   try {
-    await analyzeForSelected(file);
+    await loadLineAudio(line, file);
+    status(`${file.name} loaded — ${line.duration.toFixed(2)}s.`);
   } catch (err) {
     status(err.message, true);
   }
   e.target.value = "";
 });
 
-$("reanalyze").addEventListener("click", () => runAnalysis(state.selected));
+$("lineVoice").addEventListener("change", async (e) => {
+  const line = state.selectedLine;
+  if (!line) return;
+  line.voice = e.target.value;
+  status("Applying voice filter…");
+  try {
+    await applyLineVoice(line);
+    status(`Voice: ${e.target.selectedOptions[0].textContent}.`);
+  } catch (err) {
+    status(err.message, true);
+  }
+});
+
+$("linePitch").addEventListener("change", async (e) => {
+  const line = state.selectedLine;
+  if (!line) return;
+  line.pitch = Number(e.target.value) || 0;
+  $("linePitchOut").textContent = String(line.pitch);
+  try {
+    await applyLineVoice(line);
+  } catch (err) {
+    status(err.message, true);
+  }
+});
+$("linePitch").addEventListener("input", (e) => {
+  $("linePitchOut").textContent = String(e.target.value);
+});
+
+$("reanalyze").addEventListener("click", () => analyseLine(state.selectedLine));
 $("sensitivity").addEventListener("input", (e) => {
   $("sensitivityOut").textContent = Number(e.target.value).toFixed(2);
-});
-$("audioOffset").addEventListener("input", (e) => {
-  if (state.selected) state.selected.audioOffset = Number(e.target.value) || 0;
-  refreshDuration();
-  render();
 });
 
 // --- inspector --------------------------------------------------------------
@@ -1086,8 +1436,8 @@ $("recordWebm").addEventListener("click", async () => {
       duration: state.duration,
       fps: 30,
       audioSources: [
-        ...stage.actors.filter((a) => a.audio)
-          .map((a) => ({ buffer: a.audio.buffer, offset: a.audioOffset || 0 })),
+        ...state.lines.filter((l) => l.audio)
+          .map((l) => ({ buffer: l.audio.buffer, offset: l.start })),
         ...fxAudioSources(state.fx),
       ],
       renderAt: (t) => renderAt(t, { videoPlaying: true }),
@@ -1143,6 +1493,10 @@ $("saveProject").addEventListener("click", () => {
     // Sound buffers cannot be serialised; the bundled sound id is enough to
     // rebuild them, and an uploaded one is reported as needing re-adding.
     fx: state.fx.map(({ buffer, ...clip }) => clip),
+    sceneTitle: state.sceneTitle || "",
+    // Audio buffers are not serialisable; the text, timing and voice choice are.
+    lines: state.lines.map(({ audio, rawBuffer, track, ...line }) => line),
+    cameraSegments: state.cameraSegments,
     backdrop: stage.backdrop
       ? { name: stage.backdrop.name, horizon: stage.backdrop.horizon }
       : null,
@@ -1150,7 +1504,10 @@ $("saveProject").addEventListener("click", () => {
       name: a.name,
       rigId: a.rig.id,
       imported: Boolean(a.rig.imported),
+      id: a.id,
       keys: a.keys,
+      presence: a.presence || [],
+      tagAlong: Boolean(a.tagAlong),
       walk: a.walk,
       scaleMul: a.scaleMul,
       flip: a.flip,
@@ -1180,6 +1537,13 @@ $("loadProject").addEventListener("change", async (e) => {
     }
     selectFx(null);
     refreshFxList();
+    state.sceneTitle = data.sceneTitle || "";
+    $("sceneTitle").value = state.sceneTitle;
+    state.lines = (data.lines || []).map((line) => ({ ...line, audio: null, rawBuffer: null, track: null }));
+    state.cameraSegments = data.cameraSegments || [];
+    selectLine(null);
+    refreshLineList();
+    refreshSegmentInfo();
     state.holdFps = data.holdFps ?? 12;
     $("holdFps").value = String(state.holdFps);
     stage.unitPxAtGround = data.unitPxAtGround || stage.unitPxAtGround;
@@ -1200,6 +1564,9 @@ $("loadProject").addEventListener("change", async (e) => {
       });
       actor.mouthKitId = spec.mouthKitId ?? state.defaultKitId;
       actor.mouthKit = await kitById(actor.mouthKitId);
+      actor.presence = spec.presence || [];
+      actor.tagAlong = Boolean(spec.tagAlong);
+      if (spec.id) actor.id = spec.id;
       stage.actors.push(actor);
     }
     if (data.camera) Object.assign(stage.camera, data.camera);
@@ -1223,7 +1590,13 @@ async function boot() {
   await loadLibrary();
   await loadKits();
   await loadSfxBank();
+  setupTimeline();
   buildFxButtons();
+  refreshLineList();
+  refreshLineInspector();
+  refreshSegmentPickers();
+  refreshSegmentInfo();
+  refreshPresence();
   refreshFxList();
   refreshFxInspector();
   try {
@@ -1234,7 +1607,8 @@ async function boot() {
   }
   refreshDuration();
   refreshInspector();
-  status("Add a character, load audio, then press Play.");
+  showTab("script");
+  status("Add a character, write the lines, then block the movement.");
 }
 
 boot();
