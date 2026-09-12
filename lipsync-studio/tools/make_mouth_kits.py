@@ -55,6 +55,9 @@ KITS = [
          fur="#b98b5e", inner="#4a1d22", teeth="#fdf6ee", tongue="#d0747a", nose="#2b2429"),
     dict(id="beak", name="Beak (bird)", kind="beak", box=(170, 140),
          upper="#e0a22c", lower="#c88a1e", inner="#7a3a34", tongue="#c4676c"),
+    # Babies only ever need shut or wailing, so this kit has two real states.
+    dict(id="baby", name="Baby (open / closed)", kind="simple", box=(120, 100),
+         lip="#c9707a", inner="#5e2028", tongue="#d4838a"),
 ]
 
 
@@ -153,7 +156,26 @@ def beak_mouth(kit, viseme, angle_w):
     return svg("".join(p), bw, bh)
 
 
-BUILDERS = {"human": human_mouth, "muzzle": muzzle_mouth, "beak": beak_mouth}
+def simple_mouth(kit, viseme, angle_w):
+    """Two states dressed up as eight names: shut, or open and howling."""
+    bw, bh = kit["box"]
+    cx, cy = bw / 2, bh / 2
+    open_amount = 1.0 if JAW[viseme] >= 0.3 else 0.0
+    lip, inner, tongue = kit["lip"], kit["inner"], kit["tongue"]
+    if not open_amount:
+        hw = bw * 0.22 * angle_w
+        return svg(f'<rect x="{cx - hw:.1f}" y="{cy - 4:.1f}" width="{hw * 2:.1f}" '
+                   f'height="8" rx="4" fill="{lip}"/>', bw, bh)
+    hw = bw * 0.20 * angle_w
+    hh = bh * 0.26
+    return svg(
+        f'<ellipse cx="{cx}" cy="{cy}" rx="{hw + 6:.1f}" ry="{hh + 6:.1f}" fill="{lip}"/>'
+        f'<ellipse cx="{cx}" cy="{cy}" rx="{hw:.1f}" ry="{hh:.1f}" fill="{inner}"/>'
+        f'<ellipse cx="{cx}" cy="{cy + hh * 0.45:.1f}" rx="{hw * 0.6:.1f}" ry="{hh * 0.3:.1f}" fill="{tongue}"/>',
+        bw, bh)
+
+
+BUILDERS = {"human": human_mouth, "muzzle": muzzle_mouth, "beak": beak_mouth, "simple": simple_mouth}
 
 
 def write(path, text):
@@ -165,7 +187,7 @@ def write(path, text):
 def build(kit):
     root = os.path.join(OUT, kit["id"])
     build_one = BUILDERS[kit["kind"]]
-    widths = HUMAN_ANGLE_W if kit["kind"] == "human" else SNOUT_ANGLE_W
+    widths = HUMAN_ANGLE_W if kit["kind"] in ("human", "simple") else SNOUT_ANGLE_W
     manifest = {"id": kit["id"], "name": kit["name"], "kind": kit["kind"],
                 "box": list(kit["box"]), "angles": {}}
     for angle, angle_w in widths.items():

@@ -59,6 +59,8 @@ async function buildRig(manifest, resolveSrc) {
     name: manifest.name || manifest.id || "Character",
     heightUnits: manifest.heightUnits || 1.7,
     anchor: manifest.anchor ? manifest.anchor.slice() : null,
+    // The kit this character was designed around; the UI can still override it.
+    mouthKit: manifest.mouthKit || null,
     pixelsPerUnit: manifest.pixelsPerUnit || 0,
     angles: {},
   };
@@ -304,10 +306,16 @@ export async function mergeRigFiles(rig, files) {
  * playback - a rig missing shapes falls back (see mouthImage) - it only tells
  * the user what upgrading would buy them.
  */
-export function rigCoverage(rig) {
+export function rigCoverage(rig, kit = null) {
   const angles = availableAngles(rig);
   const speaking = angles.filter((a) => a !== "back");
-  const counts = speaking.map((a) => Object.keys(rig.angles[a].visemes).length);
+  // Count what the character can actually show: its own drawings plus whatever
+  // its mouth kit supplies for that angle.
+  const shapesFor = (a) => new Set([
+    ...Object.keys(rig.angles[a].visemes),
+    ...Object.keys(kit?.angles[a]?.visemes || kit?.angles.front?.visemes || {}),
+  ]);
+  const counts = speaking.map((a) => shapesFor(a).size);
   const fewest = counts.length ? Math.min(...counts) : 0;
 
   let tier = "draft";
@@ -319,9 +327,9 @@ export function rigCoverage(rig) {
   const missingAngles = ANGLE_ORDER.filter((a) => !rig.angles[a]);
   if (missingAngles.length) next.push(`angles: ${missingAngles.join(", ")}`);
   for (const a of speaking) {
-    const have = rig.angles[a].visemes;
-    const missingCore = CORE_VISEMES.filter((v) => !have[v]);
-    const missingRest = VISEMES.filter((v) => !have[v] && !CORE_VISEMES.includes(v));
+    const have = shapesFor(a);
+    const missingCore = CORE_VISEMES.filter((v) => !have.has(v));
+    const missingRest = VISEMES.filter((v) => !have.has(v) && !CORE_VISEMES.includes(v));
     if (missingCore.length) next.push(`${a}: core shapes ${missingCore.join(", ")}`);
     else if (missingRest.length) next.push(`${a}: extra shapes ${missingRest.join(", ")}`);
   }

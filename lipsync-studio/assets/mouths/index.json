@@ -22,5 +22,11 @@
     "name": "Beak (bird)",
     "kind": "beak",
     "kit": "beak/kit.json"
+  },
+  {
+    "id": "baby",
+    "name": "Baby (open / closed)",
+    "kind": "simple",
+    "kit": "baby/kit.json"
   }
 ]

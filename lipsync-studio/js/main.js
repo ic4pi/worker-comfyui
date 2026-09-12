@@ -125,7 +125,10 @@ function pause() {
 
 function makeActor(rig) {
   const y = stage.backdrop ? bottomY(stage) - stage.backdrop.height * 0.06 : canvas.height * 0.85;
-  const x = stage.backdrop ? stage.camera.x : canvas.width / 2;
+  // Stagger arrivals so a second character does not land inside the first.
+  const step = (canvas.width / stage.camera.zoom) * 0.16;
+  const x = (stage.backdrop ? stage.camera.x : canvas.width / 2)
+    + (stage.actors.length - 1) * step * 0.5 * (stage.actors.length % 2 ? 1 : -1);
   return {
     id: `actor${state.nextActorId++}`,
     name: rig.name,
@@ -136,8 +139,8 @@ function makeActor(rig) {
     flip: false,
     autoAngle: true,
     restAngle: availableAngles(rig)[0],
-    mouthKit: state.defaultKit || null,
-    mouthKitId: state.defaultKitId,
+    mouthKit: null,
+    mouthKitId: null,
     audio: null,
     audioOffset: 0,
     track: null,
@@ -145,8 +148,11 @@ function makeActor(rig) {
   };
 }
 
-function addActor(rig) {
+async function addActor(rig) {
   const actor = makeActor(rig);
+  // A rig may name the kit it was drawn for; otherwise take the session default.
+  actor.mouthKitId = rig.mouthKit ?? state.defaultKitId;
+  actor.mouthKit = await kitById(actor.mouthKitId);
   stage.actors.push(actor);
   select(actor);
   refreshCast();
@@ -201,7 +207,7 @@ function refreshInspector() {
   fillSelect($("tuneAngle"), angles, $("tuneAngle").value && angles.includes($("tuneAngle").value) ? $("tuneAngle").value : angles[0]);
   refreshMouthFit();
 
-  const cover = rigCoverage(actor.rig);
+  const cover = rigCoverage(actor.rig, actor.mouthKit);
   const label = { draft: "Draft", quick: "Quick", standard: "Standard", full: "Full" }[cover.tier];
   $("coverage").textContent = cover.next.length
     ? `${label} rig — ${cover.angles} angle(s), ${cover.fewestMouths} mouth shapes. Next: ${cover.next[0]}`
@@ -278,14 +284,26 @@ async function loadLibrary() {
     const res = await fetch("assets/characters/index.json");
     if (!res.ok) throw new Error("no library");
     state.library = await res.json();
-    fillSelect($("libraryPick"), state.library.map((c) => c.name));
-    $("libraryPick").innerHTML = "";
+    const pick = $("libraryPick");
+    pick.innerHTML = "";
+    // Group by role so the tone variants sit together rather than as 30 peers.
+    const groups = new Map();
     state.library.forEach((c, i) => {
-      const opt = document.createElement("option");
-      opt.value = String(i);
-      opt.textContent = c.name;
-      $("libraryPick").appendChild(opt);
+      const key = c.role || "characters";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push({ ...c, index: i });
     });
+    for (const [roleKey, members] of groups) {
+      const group = document.createElement("optgroup");
+      group.label = members[0].name.replace(/\s*\(.*\)$/, "") || roleKey;
+      for (const c of members) {
+        const opt = document.createElement("option");
+        opt.value = String(c.index);
+        opt.textContent = c.tone ? c.tone : c.name;
+        group.appendChild(opt);
+      }
+      pick.appendChild(group);
+    }
   } catch {
     $("libraryPick").innerHTML = '<option>— no bundled characters —</option>';
   }
@@ -398,7 +416,7 @@ $("addFromLibrary").addEventListener("click", async () => {
   status("Loading character…");
   try {
     const rig = await loadRigFromUrl(`assets/characters/${entry.rig}`);
-    addActor(rig);
+    await addActor(rig);
     status(`Added ${rig.name}.`);
   } catch (err) {
     status(err.message, true);
@@ -413,7 +431,7 @@ $("importRig").addEventListener("change", async (e) => {
     const folder = (files[0].webkitRelativePath || "").split("/")[0];
     const { rig, skipped } = await loadRigFromFiles(files, { name: folder || "Imported", id: folder || "imported" });
     rig.imported = true;
-    addActor(rig);
+    await addActor(rig);
     status(skipped.length ? `Added ${rig.name}. Skipped: ${skipped.join("; ")}` : `Added ${rig.name}.`);
   } catch (err) {
     status(err.message, true);

@@ -1,12 +1,212 @@
 [
   {
-    "id": "ava",
-    "name": "Ava",
-    "rig": "ava/rig.json"
+    "id": "elder_man_beige",
+    "name": "Older man (Beige)",
+    "role": "elder_man",
+    "tone": "beige",
+    "rig": "elder_man_beige/rig.json"
   },
   {
-    "id": "miles",
-    "name": "Miles",
-    "rig": "miles/rig.json"
+    "id": "elder_man_mixed",
+    "name": "Older man (Mixed)",
+    "role": "elder_man",
+    "tone": "mixed",
+    "rig": "elder_man_mixed/rig.json"
+  },
+  {
+    "id": "elder_man_brown",
+    "name": "Older man (Brown)",
+    "role": "elder_man",
+    "tone": "brown",
+    "rig": "elder_man_brown/rig.json"
+  },
+  {
+    "id": "elder_woman_beige",
+    "name": "Older woman (Beige)",
+    "role": "elder_woman",
+    "tone": "beige",
+    "rig": "elder_woman_beige/rig.json"
+  },
+  {
+    "id": "elder_woman_mixed",
+    "name": "Older woman (Mixed)",
+    "role": "elder_woman",
+    "tone": "mixed",
+    "rig": "elder_woman_mixed/rig.json"
+  },
+  {
+    "id": "elder_woman_brown",
+    "name": "Older woman (Brown)",
+    "role": "elder_woman",
+    "tone": "brown",
+    "rig": "elder_woman_brown/rig.json"
+  },
+  {
+    "id": "man_beige",
+    "name": "Man (Beige)",
+    "role": "man",
+    "tone": "beige",
+    "rig": "man_beige/rig.json"
+  },
+  {
+    "id": "man_mixed",
+    "name": "Man (Mixed)",
+    "role": "man",
+    "tone": "mixed",
+    "rig": "man_mixed/rig.json"
+  },
+  {
+    "id": "man_brown",
+    "name": "Man (Brown)",
+    "role": "man",
+    "tone": "brown",
+    "rig": "man_brown/rig.json"
+  },
+  {
+    "id": "woman_beige",
+    "name": "Woman (Beige)",
+    "role": "woman",
+    "tone": "beige",
+    "rig": "woman_beige/rig.json"
+  },
+  {
+    "id": "woman_mixed",
+    "name": "Woman (Mixed)",
+    "role": "woman",
+    "tone": "mixed",
+    "rig": "woman_mixed/rig.json"
+  },
+  {
+    "id": "woman_brown",
+    "name": "Woman (Brown)",
+    "role": "woman",
+    "tone": "brown",
+    "rig": "woman_brown/rig.json"
+  },
+  {
+    "id": "college_man_beige",
+    "name": "College man (Beige)",
+    "role": "college_man",
+    "tone": "beige",
+    "rig": "college_man_beige/rig.json"
+  },
+  {
+    "id": "college_man_mixed",
+    "name": "College man (Mixed)",
+    "role": "college_man",
+    "tone": "mixed",
+    "rig": "college_man_mixed/rig.json"
+  },
+  {
+    "id": "college_man_brown",
+    "name": "College man (Brown)",
+    "role": "college_man",
+    "tone": "brown",
+    "rig": "college_man_brown/rig.json"
+  },
+  {
+    "id": "college_woman_beige",
+    "name": "College woman (Beige)",
+    "role": "college_woman",
+    "tone": "beige",
+    "rig": "college_woman_beige/rig.json"
+  },
+  {
+    "id": "college_woman_mixed",
+    "name": "College woman (Mixed)",
+    "role": "college_woman",
+    "tone": "mixed",
+    "rig": "college_woman_mixed/rig.json"
+  },
+  {
+    "id": "college_woman_brown",
+    "name": "College woman (Brown)",
+    "role": "college_woman",
+    "tone": "brown",
+    "rig": "college_woman_brown/rig.json"
+  },
+  {
+    "id": "boy_beige",
+    "name": "Boy (Beige)",
+    "role": "boy",
+    "tone": "beige",
+    "rig": "boy_beige/rig.json"
+  },
+  {
+    "id": "boy_mixed",
+    "name": "Boy (Mixed)",
+    "role": "boy",
+    "tone": "mixed",
+    "rig": "boy_mixed/rig.json"
+  },
+  {
+    "id": "boy_brown",
+    "name": "Boy (Brown)",
+    "role": "boy",
+    "tone": "brown",
+    "rig": "boy_brown/rig.json"
+  },
+  {
+    "id": "girl_beige",
+    "name": "Girl (Beige)",
+    "role": "girl",
+    "tone": "beige",
+    "rig": "girl_beige/rig.json"
+  },
+  {
+    "id": "girl_mixed",
+    "name": "Girl (Mixed)",
+    "role": "girl",
+    "tone": "mixed",
+    "rig": "girl_mixed/rig.json"
+  },
+  {
+    "id": "girl_brown",
+    "name": "Girl (Brown)",
+    "role": "girl",
+    "tone": "brown",
+    "rig": "girl_brown/rig.json"
+  },
+  {
+    "id": "baby_beige",
+    "name": "Baby (Beige)",
+    "role": "baby",
+    "tone": "beige",
+    "rig": "baby_beige/rig.json"
+  },
+  {
+    "id": "baby_mixed",
+    "name": "Baby (Mixed)",
+    "role": "baby",
+    "tone": "mixed",
+    "rig": "baby_mixed/rig.json"
+  },
+  {
+    "id": "baby_brown",
+    "name": "Baby (Brown)",
+    "role": "baby",
+    "tone": "brown",
+    "rig": "baby_brown/rig.json"
+  },
+  {
+    "id": "priest_beige",
+    "name": "Priest (Beige)",
+    "role": "priest",
+    "tone": "beige",
+    "rig": "priest_beige/rig.json"
+  },
+  {
+    "id": "priest_mixed",
+    "name": "Priest (Mixed)",
+    "role": "priest",
+    "tone": "mixed",
+    "rig": "priest_mixed/rig.json"
+  },
+  {
+    "id": "priest_brown",
+    "name": "Priest (Brown)",
+    "role": "priest",
+    "tone": "brown",
+    "rig": "priest_brown/rig.json"
   }
 ]

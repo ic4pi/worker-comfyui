@@ -1,0 +1,62 @@
+{
+  "id": "baby_mixed",
+  "name": "Baby (Mixed)",
+  "role": "baby",
+  "tone": "mixed",
+  "heightUnits": 0.74,
+  "anchor": [
+    256,
+    1000
+  ],
+  "mouthKit": "baby",
+  "angles": {
+    "front": {
+      "body": "front/body.svg",
+      "mouth": [
+        256.0,
+        181.0
+      ],
+      "mouthSize": [
+        126.0,
+        87.6
+      ],
+      "visemes": {}
+    },
+    "three_quarter": {
+      "body": "three_quarter/body.svg",
+      "mouth": [
+        270.2,
+        181.0
+      ],
+      "mouthSize": [
+        126.0,
+        87.6
+      ],
+      "visemes": {}
+    },
+    "side": {
+      "body": "side/body.svg",
+      "mouth": [
+        279.0,
+        181.0
+      ],
+      "mouthSize": [
+        126.0,
+        87.6
+      ],
+      "visemes": {}
+    },
+    "back": {
+      "body": "back/body.svg",
+      "mouth": [
+        256.0,
+        181.0
+      ],
+      "mouthSize": [
+        126.0,
+        87.6
+      ],
+      "visemes": {}
+    }
+  }
+}

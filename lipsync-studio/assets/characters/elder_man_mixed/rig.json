@@ -1,0 +1,62 @@
+{
+  "id": "elder_man_mixed",
+  "name": "Older man (Mixed)",
+  "role": "elder_man",
+  "tone": "mixed",
+  "heightUnits": 1.67,
+  "anchor": [
+    256,
+    1000
+  ],
+  "mouthKit": "male",
+  "angles": {
+    "front": {
+      "body": "front/body.svg",
+      "mouth": [
+        256.0,
+        104.1
+      ],
+      "mouthSize": [
+        63.0,
+        43.8
+      ],
+      "visemes": {}
+    },
+    "three_quarter": {
+      "body": "three_quarter/body.svg",
+      "mouth": [
+        263.1,
+        104.1
+      ],
+      "mouthSize": [
+        63.0,
+        43.8
+      ],
+      "visemes": {}
+    },
+    "side": {
+      "body": "side/body.svg",
+      "mouth": [
+        267.5,
+        104.1
+      ],
+      "mouthSize": [
+        63.0,
+        43.8
+      ],
+      "visemes": {}
+    },
+    "back": {
+      "body": "back/body.svg",
+      "mouth": [
+        256.0,
+        104.1
+      ],
+      "mouthSize": [
+        63.0,
+        43.8
+      ],
+      "visemes": {}
+    }
+  }
+}
