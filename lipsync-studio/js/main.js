@@ -15,6 +15,10 @@ import {
 } from "./animate.js";
 import { recordWebM, exportPngSequence, downloadBlob } from "./record.js";
 import { loadKitIndex, loadKit } from "./mouthkit.js";
+import {
+  FX_TYPES, fxType, makeClip, applyCameraFx, renderOverlayFx, fxAudioSources,
+  fxDuration,
+} from "./fx.js";
 
 const $ = (id) => document.getElementById(id);
 const canvas = $("stage");
@@ -30,10 +34,27 @@ const state = {
   library: [],
   kits: [],
   defaultKitId: null,
+  fx: [],
+  selectedFx: null,
+  sfxBank: [],
   audioCtx: null,
   playingSources: [],
   nextActorId: 1,
 };
+
+// --------------------------------------------------------------------- tabs
+
+function showTab(name) {
+  for (const el of document.querySelectorAll("[data-tab]")) {
+    if (el.classList.contains("tab")) el.classList.toggle("active", el.dataset.tab === name);
+    else el.hidden = el.dataset.tab !== name;
+  }
+}
+
+document.getElementById("tabs").addEventListener("click", (e) => {
+  const tab = e.target.closest(".tab");
+  if (tab) showTab(tab.dataset.tab);
+});
 
 // ---------------------------------------------------------------- rendering
 
@@ -48,8 +69,10 @@ function renderAt(t, options = {}) {
   syncBackdropVideo(stage, state.time, options.videoPlaying ?? state.playing);
   const cam = evalCamera(state.cameraKeys, state.time, stage.camera);
   if (state.cameraKeys.length) Object.assign(stage.camera, cam);
+  applyCameraFx(stage, state.fx, state.time);
   lastPoses = evaluateScene(stage, state.time, { holdFps: state.holdFps });
   renderFrame(stage, lastPoses);
+  renderOverlayFx(stage, state.fx, state.time);
   $("timeNow").textContent = state.time.toFixed(2);
   $("scrub").value = String(state.time);
 }
@@ -90,6 +113,18 @@ function startAudio(fromTime) {
     src.buffer = actor.audio.buffer;
     src.connect(ctx.destination);
     src.start(ctx.currentTime + Math.max(0, offset - fromTime), Math.max(0, fromTime - offset));
+    state.playingSources.push(src);
+  }
+  for (const clip of fxAudioSources(state.fx)) {
+    if (clip.offset + clip.buffer.duration <= fromTime) continue;
+    const src = ctx.createBufferSource();
+    src.buffer = clip.buffer;
+    const gain = ctx.createGain();
+    gain.gain.value = clip.gain;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start(ctx.currentTime + Math.max(0, clip.offset - fromTime),
+              Math.max(0, fromTime - clip.offset));
     state.playingSources.push(src);
   }
 }
@@ -288,7 +323,8 @@ function refreshMouthFit() {
 }
 
 function refreshDuration() {
-  const needed = Math.max(sceneDuration(stage, state.cameraKeys), Number($("duration").value) || 1);
+  const needed = Math.max(sceneDuration(stage, state.cameraKeys), fxDuration(state.fx),
+                          Number($("duration").value) || 1);
   state.duration = needed;
   $("duration").value = needed.toFixed(1);
   $("scrub").max = String(needed);
@@ -365,6 +401,209 @@ $("actorKit").addEventListener("change", async (e) => {
   actor.mouthKit = await kitById(actor.mouthKitId);
   render();
   status(`${actor.name}: ${actor.mouthKitId || "own art only"}.`);
+});
+
+// ------------------------------------------------------------------- effects
+
+// Grouping mirrors how a shot actually gets built: move the camera, set the
+// light, cut, dress the screen, then letter it.
+const FX_GROUPS = [
+  ["Camera", ["shake", "handheld", "punch_zoom"]],
+  ["Light", ["lighting", "vignette"]],
+  ["Transitions", ["fade", "flash", "wipe", "iris"]],
+  ["Screen", ["speed_lines", "grain", "weather"]],
+  ["Overlays", ["callout", "bubble", "caption", "title"]],
+  ["Sound", ["sfx"]],
+];
+
+function buildFxButtons() {
+  const host = $("fxButtons");
+  host.innerHTML = "";
+  for (const [label, ids] of FX_GROUPS) {
+    const group = document.createElement("div");
+    group.className = "fxgroup";
+    const heading = document.createElement("h4");
+    heading.textContent = label;
+    group.appendChild(heading);
+    const row = document.createElement("div");
+    row.className = "row";
+    for (const id of ids) {
+      const type = fxType(id);
+      if (!type) continue;
+      const button = document.createElement("button");
+      button.textContent = type.name;
+      button.addEventListener("click", () => addFx(id));
+      row.appendChild(button);
+    }
+    group.appendChild(row);
+    host.appendChild(group);
+  }
+}
+
+async function addFx(typeId) {
+  const clip = makeClip(typeId, state.time);
+  if (!clip) return;
+  if (fxType(typeId).kind === "audio") await ensureSfxBuffer(clip);
+  state.fx.push(clip);
+  selectFx(clip);
+  refreshFxList();
+  refreshDuration();
+  render();
+  status(`Added ${fxType(typeId).name} at ${clip.start.toFixed(2)}s.`);
+}
+
+function selectFx(clip) {
+  state.selectedFx = clip;
+  refreshFxList();
+  refreshFxInspector();
+}
+
+function refreshFxList() {
+  const list = $("fxList");
+  list.innerHTML = "";
+  const ordered = [...state.fx].sort((a, b) => a.start - b.start);
+  for (const clip of ordered) {
+    const type = fxType(clip.type);
+    const li = document.createElement("li");
+    li.className = clip === state.selectedFx ? "selected" : "";
+    li.innerHTML = '<span class="name"></span><span class="when"></span>';
+    const label = clip.params.text ? `${type.name}: ${clip.params.text}` : type.name;
+    li.querySelector(".name").textContent = label;
+    li.querySelector(".when").textContent =
+      `${clip.start.toFixed(1)}–${(clip.start + clip.duration).toFixed(1)}s`;
+    li.addEventListener("click", () => {
+      selectFx(clip);
+      renderAt(clip.start);
+    });
+    list.appendChild(li);
+  }
+  $("fxInfo").textContent = state.fx.length
+    ? `${state.fx.length} effect${state.fx.length === 1 ? "" : "s"} on the track.`
+    : "No effects yet.";
+}
+
+/** Build the parameter form for the selected clip from its type's field list. */
+function refreshFxInspector() {
+  const clip = state.selectedFx;
+  $("fxInspector").hidden = !clip;
+  $("noFxSelection").hidden = Boolean(clip);
+  if (!clip) return;
+  const type = fxType(clip.type);
+  $("fxTitle").textContent = type.name;
+  $("fxStart").value = clip.start.toFixed(2);
+  $("fxDuration").value = clip.duration.toFixed(2);
+
+  const host = $("fxParams");
+  host.innerHTML = "";
+  for (const field of type.fields) {
+    const label = document.createElement("label");
+    label.className = "field";
+    label.append(field.label);
+    let input;
+    if (field.type === "select" || field.type === "sound") {
+      input = document.createElement("select");
+      const options = field.type === "sound"
+        ? state.sfxBank.map((sound) => [sound.id, sound.name])
+        : field.options.map((o) => [o, o.replace(/_/g, " ")]);
+      for (const [value, text] of options) {
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = text;
+        input.appendChild(opt);
+      }
+      input.value = clip.params[field.key] ?? options[0]?.[0] ?? "";
+    } else {
+      input = document.createElement("input");
+      input.type = field.type;
+      if (field.type === "range") {
+        input.min = field.min;
+        input.max = field.max;
+        input.step = field.step;
+      }
+      input.value = clip.params[field.key] ?? field.value ?? "";
+    }
+    const readout = document.createElement("output");
+    if (field.type === "range") readout.textContent = Number(input.value).toFixed(2);
+
+    input.addEventListener("input", async () => {
+      clip.params[field.key] = field.type === "range" ? Number(input.value) : input.value;
+      if (field.type === "range") readout.textContent = Number(input.value).toFixed(2);
+      if (field.key === "sound") await ensureSfxBuffer(clip);
+      if (field.key === "text") refreshFxList();
+      render();
+    });
+    label.appendChild(input);
+    if (field.type === "range") label.appendChild(readout);
+    host.appendChild(label);
+  }
+}
+
+function bindFxTime(id, apply) {
+  $(id).addEventListener("input", (e) => {
+    if (!state.selectedFx) return;
+    apply(state.selectedFx, Number(e.target.value) || 0);
+    refreshFxList();
+    refreshDuration();
+    render();
+  });
+}
+bindFxTime("fxStart", (clip, v) => { clip.start = Math.max(0, v); });
+bindFxTime("fxDuration", (clip, v) => { clip.duration = Math.max(0.05, v); });
+
+$("fxDelete").addEventListener("click", () => {
+  if (!state.selectedFx) return;
+  state.fx = state.fx.filter((c) => c !== state.selectedFx);
+  selectFx(null);
+  refreshFxList();
+  render();
+});
+
+$("fxDuplicate").addEventListener("click", () => {
+  const clip = state.selectedFx;
+  if (!clip) return;
+  const copy = { ...clip, id: `fx_${Math.random().toString(36).slice(2, 9)}`,
+                 start: clip.start + clip.duration, params: { ...clip.params } };
+  state.fx.push(copy);
+  selectFx(copy);
+  refreshFxList();
+  refreshDuration();
+  render();
+});
+
+// --- sound effects ------------------------------------------------------------
+
+async function loadSfxBank() {
+  try {
+    const res = await fetch("assets/sfx/index.json");
+    state.sfxBank = res.ok ? await res.json() : [];
+  } catch {
+    state.sfxBank = [];
+  }
+}
+
+/** Decode (and cache) the audio for a sound-effect clip. */
+async function ensureSfxBuffer(clip) {
+  const sound = state.sfxBank.find((s) => s.id === clip.params.sound) || state.sfxBank[0];
+  if (!sound) return;
+  clip.params.sound = sound.id;
+  if (!sound.buffer) {
+    const data = sound.file
+      ? await sound.file.arrayBuffer()
+      : await (await fetch(`assets/sfx/${sound.src}`)).arrayBuffer();
+    sound.buffer = await audioContext().decodeAudioData(data);
+  }
+  clip.buffer = sound.buffer;
+  clip.duration = Math.max(0.05, sound.buffer.duration);
+}
+
+$("sfxFile").addEventListener("change", async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const id = `user_${state.sfxBank.length}`;
+  state.sfxBank.push({ id, name: file.name, file });
+  status(`Added sound ${file.name}. Pick it on a Sound effect clip.`);
+  refreshFxInspector();
+  e.target.value = "";
 });
 
 // ------------------------------------------------------------- interactions
@@ -846,9 +1085,11 @@ $("recordWebm").addEventListener("click", async () => {
       canvas,
       duration: state.duration,
       fps: 30,
-      audioSources: stage.actors
-        .filter((a) => a.audio)
-        .map((a) => ({ buffer: a.audio.buffer, offset: a.audioOffset || 0 })),
+      audioSources: [
+        ...stage.actors.filter((a) => a.audio)
+          .map((a) => ({ buffer: a.audio.buffer, offset: a.audioOffset || 0 })),
+        ...fxAudioSources(state.fx),
+      ],
       renderAt: (t) => renderAt(t, { videoPlaying: true }),
       onProgress: (p) => {
         $("exportProgress").value = p;
@@ -899,6 +1140,9 @@ $("saveProject").addEventListener("click", () => {
     unitPxAtGround: stage.unitPxAtGround,
     camera: { ...stage.camera },
     cameraKeys: state.cameraKeys,
+    // Sound buffers cannot be serialised; the bundled sound id is enough to
+    // rebuild them, and an uploaded one is reported as needing re-adding.
+    fx: state.fx.map(({ buffer, ...clip }) => clip),
     backdrop: stage.backdrop
       ? { name: stage.backdrop.name, horizon: stage.backdrop.horizon }
       : null,
@@ -930,6 +1174,12 @@ $("loadProject").addEventListener("change", async (e) => {
   try {
     const data = JSON.parse(await file.text());
     state.cameraKeys = data.cameraKeys || [];
+    state.fx = (data.fx || []).map((clip) => ({ ...clip, params: { ...clip.params } }));
+    for (const clip of state.fx) {
+      if (fxType(clip.type)?.kind === "audio") await ensureSfxBuffer(clip);
+    }
+    selectFx(null);
+    refreshFxList();
     state.holdFps = data.holdFps ?? 12;
     $("holdFps").value = String(state.holdFps);
     stage.unitPxAtGround = data.unitPxAtGround || stage.unitPxAtGround;
@@ -972,6 +1222,10 @@ $("loadProject").addEventListener("change", async (e) => {
 async function boot() {
   await loadLibrary();
   await loadKits();
+  await loadSfxBank();
+  buildFxButtons();
+  refreshFxList();
+  refreshFxInspector();
   try {
     stage.backdrop = await loadBackdropFromUrl("assets/backgrounds/boulevard/backdrop.json");
     onBackdropLoaded();

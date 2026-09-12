@@ -10,6 +10,10 @@
 <body>
 <header class="topbar">
   <h1>Lip Sync Studio</h1>
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="character">Character</button>
+    <button class="tab" data-tab="shot">Shot &amp; FX</button>
+  </nav>
   <div class="spacer"></div>
   <label class="toggle"><input type="checkbox" id="guides"> Guides</label>
   <button id="saveProject" class="ghost">Save project</button>
@@ -17,22 +21,14 @@
 </header>
 
 <main class="layout">
-  <!-- ---------------------------------------------------------------- cast -->
   <aside class="panel left">
-    <section>
+    <!-- ============================================ CHARACTER TAB (left) -->
+    <section data-tab="character">
       <h2>Cast</h2>
-      <label class="field">Character
-        <select id="pickRole"></select>
-      </label>
-      <label class="field">Outfit
-        <select id="pickOutfit"></select>
-      </label>
-      <label class="field">Skin tone
-        <select id="pickTone"></select>
-      </label>
-      <div class="row">
-        <button id="addFromLibrary" class="primary">Add to scene</button>
-      </div>
+      <label class="field">Character <select id="pickRole"></select></label>
+      <label class="field">Outfit <select id="pickOutfit"></select></label>
+      <label class="field">Skin tone <select id="pickTone"></select></label>
+      <div class="row"><button id="addFromLibrary" class="primary">Add to scene</button></div>
       <label class="field">Default mouth kit for new characters
         <select id="defaultKit"></select>
       </label>
@@ -46,8 +42,8 @@
       </label>
       <p class="hint">
         Start with 4 front mouths (<code>closed</code>, <code>open</code>,
-        <code>wide</code>, <code>round</code>). Drop in more angles or shapes
-        later with Upgrade — placement, keys and audio are kept.
+        <code>wide</code>, <code>round</code>). Add angles or shapes later with
+        Upgrade — placement, keys and audio are kept.
       </p>
       <p class="hint">
         Name files <code>front_body.png</code>, <code>front_mouth_AI.png</code>,
@@ -57,11 +53,30 @@
       <ul id="castList" class="cast"></ul>
     </section>
 
-    <section>
+    <section data-tab="character">
+      <h2>Dialogue</h2>
+      <label class="ghost filebtn block">
+        Load audio for selected character…
+        <input type="file" id="audioFile" accept="audio/*" hidden>
+      </label>
+      <label class="field">Transcript (optional, improves mouth shapes)
+        <textarea id="transcript" rows="3" placeholder="Type what they say…"></textarea>
+      </label>
+      <label class="field">Sensitivity
+        <input type="range" id="sensitivity" min="0.4" max="2.5" step="0.05" value="1">
+        <output id="sensitivityOut">1.00</output>
+      </label>
+      <label class="field">Clip start (s)
+        <input type="number" id="audioOffset" min="0" step="0.05" value="0">
+      </label>
+      <button id="reanalyze">Re-analyze</button>
+      <p class="hint" id="audioInfo">No audio loaded.</p>
+    </section>
+
+    <!-- ================================================= SHOT TAB (left) -->
+    <section data-tab="shot" hidden>
       <h2>Backdrop</h2>
-      <div class="row">
-        <button id="loadSampleBackdrop">Sample boulevard</button>
-      </div>
+      <div class="row"><button id="loadSampleBackdrop">Sample boulevard</button></div>
       <label class="ghost filebtn block">
         Upload a wide image or video…
         <input type="file" id="backdropFile" accept="image/*,video/*" hidden>
@@ -85,32 +100,25 @@
       <p class="hint">Horizon sets where the ground plane vanishes — characters shrink toward it automatically.</p>
     </section>
 
-    <section>
-      <h2>Dialogue</h2>
+    <section data-tab="shot" hidden>
+      <h2>Add effect at playhead</h2>
+      <div id="fxButtons"></div>
       <label class="ghost filebtn block">
-        Load audio for selected character…
-        <input type="file" id="audioFile" accept="audio/*" hidden>
+        Upload a sound effect…
+        <input type="file" id="sfxFile" accept="audio/*" hidden>
       </label>
-      <label class="field">Transcript (optional, improves mouth shapes)
-        <textarea id="transcript" rows="3" placeholder="Type what they say…"></textarea>
-      </label>
-      <label class="field">Sensitivity
-        <input type="range" id="sensitivity" min="0.4" max="2.5" step="0.05" value="1">
-        <output id="sensitivityOut">1.00</output>
-      </label>
-      <label class="field">Clip start (s)
-        <input type="number" id="audioOffset" min="0" step="0.05" value="0">
-      </label>
-      <button id="reanalyze">Re-analyze</button>
-      <p class="hint" id="audioInfo">No audio loaded.</p>
+    </section>
+
+    <section data-tab="shot" hidden>
+      <h2>Effect track</h2>
+      <ul id="fxList" class="cast"></ul>
+      <p class="hint" id="fxInfo">No effects yet.</p>
     </section>
   </aside>
 
-  <!-- --------------------------------------------------------------- stage -->
+  <!-- ---------------------------------------------------------- stage -->
   <section class="stagewrap">
-    <div class="canvasbox">
-      <canvas id="stage" width="1280" height="720"></canvas>
-    </div>
+    <div class="canvasbox"><canvas id="stage" width="1280" height="720"></canvas></div>
 
     <div class="transport">
       <button id="playBtn" class="primary">Play</button>
@@ -138,9 +146,9 @@
     </div>
   </section>
 
-  <!-- --------------------------------------------------------- inspector -->
   <aside class="panel right">
-    <section>
+    <!-- =========================================== CHARACTER TAB (right) -->
+    <section data-tab="character">
       <h2>Selected character</h2>
       <p class="hint" id="noSelection">Nothing selected. Click a character on the stage.</p>
       <div id="inspector" hidden>
@@ -154,16 +162,10 @@
           <output id="actorScaleOut">1.00</output>
         </label>
         <label class="toggle"><input type="checkbox" id="autoAngle" checked> Auto angle from movement</label>
-        <label class="field">Outfit
-          <select id="actorOutfit"></select>
-        </label>
-        <label class="field">Resting angle
-          <select id="restAngle"></select>
-        </label>
         <label class="toggle"><input type="checkbox" id="flip"> Mirror</label>
-        <label class="field">Mouth kit (override)
-          <select id="actorKit"></select>
-        </label>
+        <label class="field">Mouth kit (override) <select id="actorKit"></select></label>
+        <label class="field">Outfit <select id="actorOutfit"></select></label>
+        <label class="field">Resting angle <select id="restAngle"></select></label>
 
         <h3>Walk</h3>
         <label class="toggle"><input type="checkbox" id="walkOn"> Bob while moving</label>
@@ -182,42 +184,49 @@
         <p class="hint" id="keyInfo"></p>
 
         <h3>Mouth fit</h3>
-        <label class="field">Angle to tune
-          <select id="tuneAngle"></select>
-        </label>
+        <label class="field">Angle to tune <select id="tuneAngle"></select></label>
         <label class="field">Mouth X <input type="range" id="mouthX" min="0" max="1" step="0.002"></label>
         <label class="field">Mouth Y <input type="range" id="mouthY" min="0" max="1" step="0.002"></label>
         <label class="field">Mouth size
           <input type="range" id="mouthScale" min="0.2" max="3" step="0.01" value="1">
           <output id="mouthScaleOut">1.00</output>
         </label>
+        <div class="row"><button id="removeActor" class="danger">Remove from scene</button></div>
+      </div>
+    </section>
+
+    <section data-tab="character">
+      <h2>Movement</h2>
+      <label class="field">Move template <select id="moveTemplate"></select></label>
+      <label class="field">Camera does <select id="moveCamera"></select></label>
+      <label class="field">Over (seconds)
+        <input type="number" id="moveSeconds" min="0.5" max="120" step="0.5" value="5">
+      </label>
+      <div class="row"><button id="applyTemplate" class="primary">Apply to selected</button></div>
+      <p class="hint">Templates just lay down ordinary keyframes — drag the character afterwards to adjust any of them.</p>
+    </section>
+
+    <!-- ================================================ SHOT TAB (right) -->
+    <section data-tab="shot" hidden>
+      <h2>Selected effect</h2>
+      <p class="hint" id="noFxSelection">Nothing selected. Add an effect, then pick it from the track.</p>
+      <div id="fxInspector" hidden>
+        <h3 id="fxTitle"></h3>
+        <label class="field">Start (s)
+          <input type="number" id="fxStart" min="0" step="0.05" value="0">
+        </label>
+        <label class="field">Length (s)
+          <input type="number" id="fxDuration" min="0.05" step="0.05" value="1">
+        </label>
+        <div id="fxParams"></div>
         <div class="row">
-          <button id="removeActor" class="danger">Remove from scene</button>
+          <button id="fxDuplicate" class="ghost">Duplicate</button>
+          <button id="fxDelete" class="danger">Delete</button>
         </div>
       </div>
     </section>
 
-    <section>
-      <h2>Movement</h2>
-      <label class="field">Move template
-        <select id="moveTemplate"></select>
-      </label>
-      <label class="field">Camera does
-        <select id="moveCamera"></select>
-      </label>
-      <label class="field">Over (seconds)
-        <input type="number" id="moveSeconds" min="0.5" max="120" step="0.5" value="5">
-      </label>
-      <div class="row">
-        <button id="applyTemplate" class="primary">Apply to selected</button>
-      </div>
-      <p class="hint">
-        Templates just lay down ordinary keyframes — drag the character
-        afterwards to adjust any of them.
-      </p>
-    </section>
-
-    <section>
+    <section data-tab="shot" hidden>
       <h2>Camera</h2>
       <div class="row">
         <button id="camKey">Key camera at playhead</button>

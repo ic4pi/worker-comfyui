@@ -28,7 +28,8 @@ function pickMimeType() {
  * offset, muxing picture and sound into one WebM. Real time is a hard constraint
  * of MediaRecorder - a 30s shot takes 30s to export.
  *
- * @param {{canvas:HTMLCanvasElement, audioSources?:Array<{buffer:AudioBuffer, offset:number}>,
+ * @param {{canvas:HTMLCanvasElement,
+ *          audioSources?:Array<{buffer:AudioBuffer, offset:number, gain?:number}>,
  *          duration:number, fps?:number, renderAt:(t:number)=>void,
  *          onProgress?:(p:number)=>void}} opts
  */
@@ -47,8 +48,11 @@ export async function recordWebM(opts) {
     for (const clip of audioSources) {
       const source = audioCtx.createBufferSource();
       source.buffer = clip.buffer;
-      source.connect(dest);
-      source.connect(audioCtx.destination);
+      const gain = audioCtx.createGain();
+      gain.gain.value = clip.gain ?? 1;
+      source.connect(gain);
+      gain.connect(dest);
+      gain.connect(audioCtx.destination);
       sources.push({ source, offset: clip.offset || 0 });
     }
     dest.stream.getAudioTracks().forEach((track) => stream.addTrack(track));

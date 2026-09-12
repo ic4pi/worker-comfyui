@@ -145,3 +145,38 @@ progress { width: 140px; accent-color: var(--accent); }
   .layout { grid-template-columns: 1fr; }
   .panel { max-height: none; }
 }
+
+/* Tabs split the studio into the character side and the shot / FX side. */
+.tabs { display: flex; gap: 4px; margin-left: 14px; }
+.tab {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  padding: 5px 13px;
+  border-radius: 7px;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { background: var(--panel-2); border-color: var(--accent); color: var(--ink); }
+
+/* Effect-track rows reuse the cast-list look with a time badge. */
+.cast li .when { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.fxgroup { margin: 0 0 10px; }
+.fxgroup h4 {
+  margin: 10px 0 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.fxgroup .row { flex-wrap: wrap; gap: 6px; margin: 0; }
+.fxgroup button { flex: 0 1 auto; padding: 5px 9px; font-size: 12px; }
+.field input[type="color"] {
+  width: 100%;
+  height: 30px;
+  margin-top: 4px;
+  padding: 2px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
