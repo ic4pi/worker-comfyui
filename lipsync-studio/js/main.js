@@ -12,6 +12,7 @@ import {
   evaluateScene, evalCamera, putKey, sortKeys, sceneDuration, followActor,
 } from "./animate.js";
 import { recordWebM, exportPngSequence, downloadBlob } from "./record.js";
+import { loadKitIndex, loadKit } from "./mouthkit.js";
 
 const $ = (id) => document.getElementById(id);
 const canvas = $("stage");
@@ -25,6 +26,8 @@ const state = {
   playing: false,
   selected: null,
   library: [],
+  kits: [],
+  defaultKitId: null,
   audioCtx: null,
   playingSources: [],
   nextActorId: 1,
@@ -133,6 +136,8 @@ function makeActor(rig) {
     flip: false,
     autoAngle: true,
     restAngle: availableAngles(rig)[0],
+    mouthKit: state.defaultKit || null,
+    mouthKitId: state.defaultKitId,
     audio: null,
     audioOffset: 0,
     track: null,
@@ -182,6 +187,7 @@ function refreshInspector() {
   $("actorScaleOut").textContent = actor.scaleMul.toFixed(2);
   $("autoAngle").checked = actor.autoAngle !== false;
   $("flip").checked = Boolean(actor.flip);
+  fillKitSelect($("actorKit"), actor.mouthKitId ?? "");
   $("walkOn").checked = Boolean(actor.walk?.enabled);
   $("stepHz").value = String(actor.walk?.stepHz ?? 2.2);
   $("stepHzOut").textContent = (actor.walk?.stepHz ?? 2.2).toFixed(2);
@@ -243,6 +249,28 @@ function refreshDuration() {
   $("timeEnd").textContent = needed.toFixed(2);
 }
 
+function fillKitSelect(select, chosen) {
+  select.innerHTML = "";
+  const own = document.createElement("option");
+  own.value = "";
+  own.textContent = "own art only";
+  select.appendChild(own);
+  for (const entry of state.kits) {
+    const opt = document.createElement("option");
+    opt.value = entry.id;
+    opt.textContent = entry.name;
+    select.appendChild(opt);
+  }
+  select.value = chosen ?? "";
+}
+
+/** Resolve a kit id to loaded images, or null for "own art only". */
+async function kitById(id) {
+  if (!id) return null;
+  const entry = state.kits.find((k) => k.id === id);
+  return entry ? loadKit(entry) : null;
+}
+
 // ------------------------------------------------------------------ library
 
 async function loadLibrary() {
@@ -262,6 +290,36 @@ async function loadLibrary() {
     $("libraryPick").innerHTML = '<option>— no bundled characters —</option>';
   }
 }
+
+async function loadKits() {
+  try {
+    state.kits = await loadKitIndex();
+  } catch {
+    state.kits = [];
+  }
+  // Default to the first human kit so a fresh character can talk immediately.
+  const human = state.kits.find((k) => k.kind === "human");
+  state.defaultKitId = human ? human.id : (state.kits[0]?.id ?? null);
+  state.defaultKit = await kitById(state.defaultKitId);
+  fillKitSelect($("defaultKit"), state.defaultKitId ?? "");
+}
+
+$("defaultKit").addEventListener("change", async (e) => {
+  state.defaultKitId = e.target.value || null;
+  state.defaultKit = await kitById(state.defaultKitId);
+  status(state.defaultKitId
+    ? `New characters will use the ${state.defaultKitId} mouth kit.`
+    : "New characters will use their own mouth art only.");
+});
+
+$("actorKit").addEventListener("change", async (e) => {
+  const actor = state.selected;
+  if (!actor) return;
+  actor.mouthKitId = e.target.value || null;
+  actor.mouthKit = await kitById(actor.mouthKitId);
+  render();
+  status(`${actor.name}: ${actor.mouthKitId || "own art only"}.`);
+});
 
 // ------------------------------------------------------------- interactions
 
@@ -740,6 +798,7 @@ $("saveProject").addEventListener("click", () => {
       autoAngle: a.autoAngle,
       restAngle: a.restAngle,
       audioOffset: a.audioOffset,
+      mouthKitId: a.mouthKitId || null,
       transcript: a.transcript || "",
       track: a.track,
     })),
@@ -774,6 +833,8 @@ $("loadProject").addEventListener("change", async (e) => {
         flip: spec.flip, autoAngle: spec.autoAngle, restAngle: spec.restAngle,
         audioOffset: spec.audioOffset, transcript: spec.transcript, track: spec.track,
       });
+      actor.mouthKitId = spec.mouthKitId ?? state.defaultKitId;
+      actor.mouthKit = await kitById(actor.mouthKitId);
       stage.actors.push(actor);
     }
     if (data.camera) Object.assign(stage.camera, data.camera);
@@ -795,6 +856,7 @@ $("loadProject").addEventListener("change", async (e) => {
 
 async function boot() {
   await loadLibrary();
+  await loadKits();
   try {
     stage.backdrop = await loadBackdropFromUrl("assets/backgrounds/boulevard/backdrop.json");
     onBackdropLoaded();

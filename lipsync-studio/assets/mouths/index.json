@@ -1,0 +1,26 @@
+[
+  {
+    "id": "female",
+    "name": "Female",
+    "kind": "human",
+    "kit": "female/kit.json"
+  },
+  {
+    "id": "male",
+    "name": "Male",
+    "kind": "human",
+    "kit": "male/kit.json"
+  },
+  {
+    "id": "muzzle",
+    "name": "Muzzle (dog / cat / horse)",
+    "kind": "muzzle",
+    "kit": "muzzle/kit.json"
+  },
+  {
+    "id": "beak",
+    "name": "Beak (bird)",
+    "kind": "beak",
+    "kit": "beak/kit.json"
+  }
+]

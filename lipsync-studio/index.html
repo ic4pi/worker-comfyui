@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lip Sync Studio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2315171c'/%3E%3Cellipse cx='16' cy='17' rx='9' ry='7' fill='%23b0555f'/%3E%3Cellipse cx='16' cy='17' rx='6' ry='4.5' fill='%2357202a'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -24,6 +25,9 @@
         <select id="libraryPick"></select>
         <button id="addFromLibrary">Add</button>
       </div>
+      <label class="field">Default mouth kit for new characters
+        <select id="defaultKit"></select>
+      </label>
       <label class="ghost filebtn block">
         Import character folder…
         <input type="file" id="importRig" multiple webkitdirectory directory hidden>
@@ -138,6 +142,9 @@
           <select id="restAngle"></select>
         </label>
         <label class="toggle"><input type="checkbox" id="flip"> Mirror</label>
+        <label class="field">Mouth kit (override)
+          <select id="actorKit"></select>
+        </label>
 
         <h3>Walk</h3>
         <label class="toggle"><input type="checkbox" id="walkOn"> Bob while moving</label>

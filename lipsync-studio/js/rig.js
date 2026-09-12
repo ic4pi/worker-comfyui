@@ -224,13 +224,22 @@ const FALLBACK = {
   U: ["U", "O", "WQ"],
 };
 
-export function mouthImage(angle, viseme) {
+export function mouthImage(angle, viseme, kit = null, angleName = "front") {
   const chain = FALLBACK[viseme] || [viseme];
+  // A kit has no back view; a character seen from behind shows no mouth.
+  const kitAngle = kit && (kit.angles[angleName] || (angleName === "back" ? null : kit.angles.front));
+
+  // Exact match first, the character's own drawing winning over the kit, so a
+  // single custom shape (a snarl, a mustache-aware "closed") can override one
+  // frame without forking the whole kit.
+  if (angle.visemes[viseme]) return angle.visemes[viseme];
+  if (kitAngle?.visemes[viseme]) return kitAngle.visemes[viseme];
+
   for (const v of chain) {
     if (angle.visemes[v]) return angle.visemes[v];
+    if (kitAngle?.visemes[v]) return kitAngle.visemes[v];
   }
-  const first = Object.values(angle.visemes)[0];
-  return first || null;
+  return Object.values(angle.visemes)[0] || null;
 }
 
 /** Angles a rig actually provides, in canonical order. */

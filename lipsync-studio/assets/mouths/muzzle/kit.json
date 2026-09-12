@@ -1,0 +1,53 @@
+{
+  "id": "muzzle",
+  "name": "Muzzle (dog / cat / horse)",
+  "kind": "muzzle",
+  "box": [
+    190,
+    150
+  ],
+  "angles": {
+    "front": {
+      "visemes": {
+        "rest": "front/rest.svg",
+        "MBP": "front/MBP.svg",
+        "FV": "front/FV.svg",
+        "TH": "front/TH.svg",
+        "L": "front/L.svg",
+        "WQ": "front/WQ.svg",
+        "E": "front/E.svg",
+        "AI": "front/AI.svg",
+        "O": "front/O.svg",
+        "U": "front/U.svg"
+      }
+    },
+    "three_quarter": {
+      "visemes": {
+        "rest": "three_quarter/rest.svg",
+        "MBP": "three_quarter/MBP.svg",
+        "FV": "three_quarter/FV.svg",
+        "TH": "three_quarter/TH.svg",
+        "L": "three_quarter/L.svg",
+        "WQ": "three_quarter/WQ.svg",
+        "E": "three_quarter/E.svg",
+        "AI": "three_quarter/AI.svg",
+        "O": "three_quarter/O.svg",
+        "U": "three_quarter/U.svg"
+      }
+    },
+    "side": {
+      "visemes": {
+        "rest": "side/rest.svg",
+        "MBP": "side/MBP.svg",
+        "FV": "side/FV.svg",
+        "TH": "side/TH.svg",
+        "L": "side/L.svg",
+        "WQ": "side/WQ.svg",
+        "E": "side/E.svg",
+        "AI": "side/AI.svg",
+        "O": "side/O.svg",
+        "U": "side/U.svg"
+      }
+    }
+  }
+}

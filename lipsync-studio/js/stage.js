@@ -222,11 +222,12 @@ export function renderFrame(stage, poses) {
 
     ctx.drawImage(angle.body, 0, 0, angle.body.naturalWidth, angle.body.naturalHeight);
 
-    const mouth = mouthImage(angle, pose.viseme);
+    const mouth = mouthImage(angle, pose.viseme, pose.actor.mouthKit, pose.angle);
     if (mouth) {
-      const [mw, mh] = angle.mouthSize;
-      const w = mw * angle.mouthScale;
-      const h = mh * angle.mouthScale;
+      // Width comes from the rig's fitting; height follows the drawing's own
+      // aspect, so kits with different canvas shapes swap in without distortion.
+      const w = angle.mouthSize[0] * angle.mouthScale;
+      const h = w * (mouth.naturalHeight / mouth.naturalWidth);
       ctx.drawImage(mouth, angle.mouth[0] - w / 2, angle.mouth[1] - h / 2, w, h);
     }
     ctx.restore();
