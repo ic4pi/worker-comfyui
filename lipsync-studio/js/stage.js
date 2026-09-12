@@ -61,9 +61,33 @@ export async function loadBackdropFromUrl(url) {
   };
 }
 
-/** Load a backdrop from one uploaded image - the common case. */
+function loadVideo(src) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.onloadeddata = () => resolve(video);
+    video.onerror = () => reject(new Error("could not load video backdrop"));
+    video.src = src;
+  });
+}
+
+/** Load a backdrop from one uploaded image or video - the common case. */
 export async function loadBackdropFromFile(file) {
-  const img = await loadImage(URL.createObjectURL(file));
+  const url = URL.createObjectURL(file);
+  if (file.type.startsWith("video/")) {
+    const video = await loadVideo(url);
+    return {
+      name: file.name,
+      width: video.videoWidth,
+      height: video.videoHeight,
+      horizon: DEFAULT_HORIZON,
+      layers: [{ video, parallax: 1 }],
+    };
+  }
+  const img = await loadImage(url);
   return {
     name: file.name,
     width: img.naturalWidth,
@@ -71,6 +95,53 @@ export async function loadBackdropFromFile(file) {
     horizon: DEFAULT_HORIZON,
     layers: [{ img, parallax: 1 }],
   };
+}
+
+/** Add an uploaded image or video as an extra parallax layer on the backdrop. */
+export async function addBackdropLayer(stage, file, parallax = 1) {
+  const url = URL.createObjectURL(file);
+  const layer = file.type.startsWith("video/")
+    ? { video: await loadVideo(url), parallax }
+    : { img: await loadImage(url), parallax };
+  stage.backdrop.layers.push(layer);
+  return layer;
+}
+
+function videoLayers(stage) {
+  return (stage.backdrop?.layers || []).filter((l) => l.video);
+}
+
+/** Keep video layers in step with the timeline. */
+export function syncBackdropVideo(stage, time, playing) {
+  for (const layer of videoLayers(stage)) {
+    const { video } = layer;
+    if (!video.duration) continue;
+    const target = time % video.duration;
+    if (playing) {
+      // Only correct the video when it has drifted; constant seeking stutters.
+      if (Math.abs(video.currentTime - target) > 0.25) video.currentTime = target;
+      if (video.paused) video.play().catch(() => {});
+    } else {
+      if (!video.paused) video.pause();
+      video.currentTime = target;
+    }
+  }
+}
+
+/** Seek video layers and wait for the frame - used by frame-exact export. */
+export async function seekBackdropVideo(stage, time) {
+  await Promise.all(videoLayers(stage).map((layer) => new Promise((resolve) => {
+    const { video } = layer;
+    if (!video.duration) return resolve();
+    video.pause();
+    const target = time % video.duration;
+    if (Math.abs(video.currentTime - target) < 1e-3) return resolve();
+    video.onseeked = () => {
+      video.onseeked = null;
+      resolve();
+    };
+    video.currentTime = target;
+  })));
 }
 
 export function horizonY(stage) {
@@ -133,6 +204,25 @@ export function fillZoom(stage) {
   return Math.max(stage.canvas.width / b.width, stage.canvas.height / b.height);
 }
 
+/**
+ * Keep a camera inside the backdrop: never zoomed out past the point where the
+ * backdrop fills the frame, and never panned off its edges. Applied to
+ * generated moves so a template cannot produce black bars; manual dragging is
+ * left unclamped so the user can still go wherever they want.
+ */
+export function clampCamera(stage, cam) {
+  const b = stage.backdrop;
+  if (!b) return { ...cam };
+  const zoom = Math.max(cam.zoom, fillZoom(stage));
+  const halfW = stage.canvas.width / zoom / 2;
+  const halfH = stage.canvas.height / zoom / 2;
+  return {
+    zoom,
+    x: Math.min(b.width - halfW, Math.max(halfW, cam.x)),
+    y: Math.min(b.height - halfH, Math.max(halfH, cam.y)),
+  };
+}
+
 // --- rendering ---------------------------------------------------------------
 
 function drawBackdrop(stage, ctx) {
@@ -144,15 +234,19 @@ function drawBackdrop(stage, ctx) {
     return;
   }
   const layers = [...b.layers].sort((p, q) => p.parallax - q.parallax);
+  // Parallax is measured from the middle of the backdrop, not the world origin:
+  // every layer lines up when the camera is centred, and distant layers lag
+  // behind only as the camera travels away from that point. Measuring from the
+  // origin instead would slide the sky out of frame the moment you panned.
+  const refX = b.width / 2;
+  const refY = b.height / 2;
   for (const layer of layers) {
-    // Parallax shifts a layer toward the camera's centre; nearer layers (higher
-    // parallax) track the camera one-to-one, distant ones lag behind.
-    const px = camera.x * layer.parallax;
-    const py = camera.y * layer.parallax;
+    const px = refX + (camera.x - refX) * layer.parallax;
+    const py = refY + (camera.y - refY) * layer.parallax;
     ctx.save();
     ctx.translate(canvas.width / 2 - px * camera.zoom, canvas.height / 2 - py * camera.zoom);
     ctx.scale(camera.zoom, camera.zoom);
-    ctx.drawImage(layer.img, 0, 0, b.width, b.height);
+    ctx.drawImage(layer.video || layer.img, 0, 0, b.width, b.height);
     ctx.restore();
   }
 }

@@ -1,212 +1,872 @@
 [
   {
-    "id": "elder_man_beige",
-    "name": "Older man (Beige)",
+    "id": "elder_man_cardigan_beige",
+    "name": "Older man \u2014 Cardigan (Beige)",
     "role": "elder_man",
+    "roleName": "Older man",
+    "outfit": "cardigan",
+    "outfitName": "Cardigan",
     "tone": "beige",
-    "rig": "elder_man_beige/rig.json"
+    "rig": "elder_man_cardigan_beige/rig.json"
   },
   {
-    "id": "elder_man_mixed",
-    "name": "Older man (Mixed)",
+    "id": "elder_man_cardigan_mixed",
+    "name": "Older man \u2014 Cardigan (Mixed)",
     "role": "elder_man",
+    "roleName": "Older man",
+    "outfit": "cardigan",
+    "outfitName": "Cardigan",
     "tone": "mixed",
-    "rig": "elder_man_mixed/rig.json"
+    "rig": "elder_man_cardigan_mixed/rig.json"
   },
   {
-    "id": "elder_man_brown",
-    "name": "Older man (Brown)",
+    "id": "elder_man_cardigan_brown",
+    "name": "Older man \u2014 Cardigan (Brown)",
     "role": "elder_man",
+    "roleName": "Older man",
+    "outfit": "cardigan",
+    "outfitName": "Cardigan",
     "tone": "brown",
-    "rig": "elder_man_brown/rig.json"
+    "rig": "elder_man_cardigan_brown/rig.json"
   },
   {
-    "id": "elder_woman_beige",
-    "name": "Older woman (Beige)",
+    "id": "elder_man_suit_m_beige",
+    "name": "Older man \u2014 Suit (Beige)",
+    "role": "elder_man",
+    "roleName": "Older man",
+    "outfit": "suit_m",
+    "outfitName": "Suit",
+    "tone": "beige",
+    "rig": "elder_man_suit_m_beige/rig.json"
+  },
+  {
+    "id": "elder_man_suit_m_mixed",
+    "name": "Older man \u2014 Suit (Mixed)",
+    "role": "elder_man",
+    "roleName": "Older man",
+    "outfit": "suit_m",
+    "outfitName": "Suit",
+    "tone": "mixed",
+    "rig": "elder_man_suit_m_mixed/rig.json"
+  },
+  {
+    "id": "elder_man_suit_m_brown",
+    "name": "Older man \u2014 Suit (Brown)",
+    "role": "elder_man",
+    "roleName": "Older man",
+    "outfit": "suit_m",
+    "outfitName": "Suit",
+    "tone": "brown",
+    "rig": "elder_man_suit_m_brown/rig.json"
+  },
+  {
+    "id": "elder_man_overalls_beige",
+    "name": "Older man \u2014 Overalls (Beige)",
+    "role": "elder_man",
+    "roleName": "Older man",
+    "outfit": "overalls",
+    "outfitName": "Overalls",
+    "tone": "beige",
+    "rig": "elder_man_overalls_beige/rig.json"
+  },
+  {
+    "id": "elder_man_overalls_mixed",
+    "name": "Older man \u2014 Overalls (Mixed)",
+    "role": "elder_man",
+    "roleName": "Older man",
+    "outfit": "overalls",
+    "outfitName": "Overalls",
+    "tone": "mixed",
+    "rig": "elder_man_overalls_mixed/rig.json"
+  },
+  {
+    "id": "elder_man_overalls_brown",
+    "name": "Older man \u2014 Overalls (Brown)",
+    "role": "elder_man",
+    "roleName": "Older man",
+    "outfit": "overalls",
+    "outfitName": "Overalls",
+    "tone": "brown",
+    "rig": "elder_man_overalls_brown/rig.json"
+  },
+  {
+    "id": "elder_woman_gown_e_beige",
+    "name": "Older woman \u2014 Day dress (Beige)",
     "role": "elder_woman",
+    "roleName": "Older woman",
+    "outfit": "gown_e",
+    "outfitName": "Day dress",
     "tone": "beige",
-    "rig": "elder_woman_beige/rig.json"
+    "rig": "elder_woman_gown_e_beige/rig.json"
   },
   {
-    "id": "elder_woman_mixed",
-    "name": "Older woman (Mixed)",
+    "id": "elder_woman_gown_e_mixed",
+    "name": "Older woman \u2014 Day dress (Mixed)",
     "role": "elder_woman",
+    "roleName": "Older woman",
+    "outfit": "gown_e",
+    "outfitName": "Day dress",
     "tone": "mixed",
-    "rig": "elder_woman_mixed/rig.json"
+    "rig": "elder_woman_gown_e_mixed/rig.json"
   },
   {
-    "id": "elder_woman_brown",
-    "name": "Older woman (Brown)",
+    "id": "elder_woman_gown_e_brown",
+    "name": "Older woman \u2014 Day dress (Brown)",
     "role": "elder_woman",
+    "roleName": "Older woman",
+    "outfit": "gown_e",
+    "outfitName": "Day dress",
     "tone": "brown",
-    "rig": "elder_woman_brown/rig.json"
+    "rig": "elder_woman_gown_e_brown/rig.json"
   },
   {
-    "id": "man_beige",
-    "name": "Man (Beige)",
+    "id": "elder_woman_blouse_f_beige",
+    "name": "Older woman \u2014 Blouse & slacks (Beige)",
+    "role": "elder_woman",
+    "roleName": "Older woman",
+    "outfit": "blouse_f",
+    "outfitName": "Blouse & slacks",
+    "tone": "beige",
+    "rig": "elder_woman_blouse_f_beige/rig.json"
+  },
+  {
+    "id": "elder_woman_blouse_f_mixed",
+    "name": "Older woman \u2014 Blouse & slacks (Mixed)",
+    "role": "elder_woman",
+    "roleName": "Older woman",
+    "outfit": "blouse_f",
+    "outfitName": "Blouse & slacks",
+    "tone": "mixed",
+    "rig": "elder_woman_blouse_f_mixed/rig.json"
+  },
+  {
+    "id": "elder_woman_blouse_f_brown",
+    "name": "Older woman \u2014 Blouse & slacks (Brown)",
+    "role": "elder_woman",
+    "roleName": "Older woman",
+    "outfit": "blouse_f",
+    "outfitName": "Blouse & slacks",
+    "tone": "brown",
+    "rig": "elder_woman_blouse_f_brown/rig.json"
+  },
+  {
+    "id": "elder_woman_suit_f_beige",
+    "name": "Older woman \u2014 Suit (Beige)",
+    "role": "elder_woman",
+    "roleName": "Older woman",
+    "outfit": "suit_f",
+    "outfitName": "Suit",
+    "tone": "beige",
+    "rig": "elder_woman_suit_f_beige/rig.json"
+  },
+  {
+    "id": "elder_woman_suit_f_mixed",
+    "name": "Older woman \u2014 Suit (Mixed)",
+    "role": "elder_woman",
+    "roleName": "Older woman",
+    "outfit": "suit_f",
+    "outfitName": "Suit",
+    "tone": "mixed",
+    "rig": "elder_woman_suit_f_mixed/rig.json"
+  },
+  {
+    "id": "elder_woman_suit_f_brown",
+    "name": "Older woman \u2014 Suit (Brown)",
+    "role": "elder_woman",
+    "roleName": "Older woman",
+    "outfit": "suit_f",
+    "outfitName": "Suit",
+    "tone": "brown",
+    "rig": "elder_woman_suit_f_brown/rig.json"
+  },
+  {
+    "id": "man_casual_m_beige",
+    "name": "Man \u2014 Casual (Beige)",
     "role": "man",
+    "roleName": "Man",
+    "outfit": "casual_m",
+    "outfitName": "Casual",
     "tone": "beige",
-    "rig": "man_beige/rig.json"
+    "rig": "man_casual_m_beige/rig.json"
   },
   {
-    "id": "man_mixed",
-    "name": "Man (Mixed)",
+    "id": "man_casual_m_mixed",
+    "name": "Man \u2014 Casual (Mixed)",
     "role": "man",
+    "roleName": "Man",
+    "outfit": "casual_m",
+    "outfitName": "Casual",
     "tone": "mixed",
-    "rig": "man_mixed/rig.json"
+    "rig": "man_casual_m_mixed/rig.json"
   },
   {
-    "id": "man_brown",
-    "name": "Man (Brown)",
+    "id": "man_casual_m_brown",
+    "name": "Man \u2014 Casual (Brown)",
     "role": "man",
+    "roleName": "Man",
+    "outfit": "casual_m",
+    "outfitName": "Casual",
     "tone": "brown",
-    "rig": "man_brown/rig.json"
+    "rig": "man_casual_m_brown/rig.json"
   },
   {
-    "id": "woman_beige",
-    "name": "Woman (Beige)",
+    "id": "man_suit_m_beige",
+    "name": "Man \u2014 Suit (Beige)",
+    "role": "man",
+    "roleName": "Man",
+    "outfit": "suit_m",
+    "outfitName": "Suit",
+    "tone": "beige",
+    "rig": "man_suit_m_beige/rig.json"
+  },
+  {
+    "id": "man_suit_m_mixed",
+    "name": "Man \u2014 Suit (Mixed)",
+    "role": "man",
+    "roleName": "Man",
+    "outfit": "suit_m",
+    "outfitName": "Suit",
+    "tone": "mixed",
+    "rig": "man_suit_m_mixed/rig.json"
+  },
+  {
+    "id": "man_suit_m_brown",
+    "name": "Man \u2014 Suit (Brown)",
+    "role": "man",
+    "roleName": "Man",
+    "outfit": "suit_m",
+    "outfitName": "Suit",
+    "tone": "brown",
+    "rig": "man_suit_m_brown/rig.json"
+  },
+  {
+    "id": "man_work_m_beige",
+    "name": "Man \u2014 Work (Beige)",
+    "role": "man",
+    "roleName": "Man",
+    "outfit": "work_m",
+    "outfitName": "Work",
+    "tone": "beige",
+    "rig": "man_work_m_beige/rig.json"
+  },
+  {
+    "id": "man_work_m_mixed",
+    "name": "Man \u2014 Work (Mixed)",
+    "role": "man",
+    "roleName": "Man",
+    "outfit": "work_m",
+    "outfitName": "Work",
+    "tone": "mixed",
+    "rig": "man_work_m_mixed/rig.json"
+  },
+  {
+    "id": "man_work_m_brown",
+    "name": "Man \u2014 Work (Brown)",
+    "role": "man",
+    "roleName": "Man",
+    "outfit": "work_m",
+    "outfitName": "Work",
+    "tone": "brown",
+    "rig": "man_work_m_brown/rig.json"
+  },
+  {
+    "id": "woman_dress_f_beige",
+    "name": "Woman \u2014 Dress (Beige)",
     "role": "woman",
+    "roleName": "Woman",
+    "outfit": "dress_f",
+    "outfitName": "Dress",
     "tone": "beige",
-    "rig": "woman_beige/rig.json"
+    "rig": "woman_dress_f_beige/rig.json"
   },
   {
-    "id": "woman_mixed",
-    "name": "Woman (Mixed)",
+    "id": "woman_dress_f_mixed",
+    "name": "Woman \u2014 Dress (Mixed)",
     "role": "woman",
+    "roleName": "Woman",
+    "outfit": "dress_f",
+    "outfitName": "Dress",
     "tone": "mixed",
-    "rig": "woman_mixed/rig.json"
+    "rig": "woman_dress_f_mixed/rig.json"
   },
   {
-    "id": "woman_brown",
-    "name": "Woman (Brown)",
+    "id": "woman_dress_f_brown",
+    "name": "Woman \u2014 Dress (Brown)",
     "role": "woman",
+    "roleName": "Woman",
+    "outfit": "dress_f",
+    "outfitName": "Dress",
     "tone": "brown",
-    "rig": "woman_brown/rig.json"
+    "rig": "woman_dress_f_brown/rig.json"
   },
   {
-    "id": "college_man_beige",
-    "name": "College man (Beige)",
+    "id": "woman_blouse_f_beige",
+    "name": "Woman \u2014 Blouse & slacks (Beige)",
+    "role": "woman",
+    "roleName": "Woman",
+    "outfit": "blouse_f",
+    "outfitName": "Blouse & slacks",
+    "tone": "beige",
+    "rig": "woman_blouse_f_beige/rig.json"
+  },
+  {
+    "id": "woman_blouse_f_mixed",
+    "name": "Woman \u2014 Blouse & slacks (Mixed)",
+    "role": "woman",
+    "roleName": "Woman",
+    "outfit": "blouse_f",
+    "outfitName": "Blouse & slacks",
+    "tone": "mixed",
+    "rig": "woman_blouse_f_mixed/rig.json"
+  },
+  {
+    "id": "woman_blouse_f_brown",
+    "name": "Woman \u2014 Blouse & slacks (Brown)",
+    "role": "woman",
+    "roleName": "Woman",
+    "outfit": "blouse_f",
+    "outfitName": "Blouse & slacks",
+    "tone": "brown",
+    "rig": "woman_blouse_f_brown/rig.json"
+  },
+  {
+    "id": "woman_scrubs_beige",
+    "name": "Woman \u2014 Scrubs (Beige)",
+    "role": "woman",
+    "roleName": "Woman",
+    "outfit": "scrubs",
+    "outfitName": "Scrubs",
+    "tone": "beige",
+    "rig": "woman_scrubs_beige/rig.json"
+  },
+  {
+    "id": "woman_scrubs_mixed",
+    "name": "Woman \u2014 Scrubs (Mixed)",
+    "role": "woman",
+    "roleName": "Woman",
+    "outfit": "scrubs",
+    "outfitName": "Scrubs",
+    "tone": "mixed",
+    "rig": "woman_scrubs_mixed/rig.json"
+  },
+  {
+    "id": "woman_scrubs_brown",
+    "name": "Woman \u2014 Scrubs (Brown)",
+    "role": "woman",
+    "roleName": "Woman",
+    "outfit": "scrubs",
+    "outfitName": "Scrubs",
+    "tone": "brown",
+    "rig": "woman_scrubs_brown/rig.json"
+  },
+  {
+    "id": "college_man_hoodie_beige",
+    "name": "College man \u2014 Hoodie (Beige)",
     "role": "college_man",
+    "roleName": "College man",
+    "outfit": "hoodie",
+    "outfitName": "Hoodie",
     "tone": "beige",
-    "rig": "college_man_beige/rig.json"
+    "rig": "college_man_hoodie_beige/rig.json"
   },
   {
-    "id": "college_man_mixed",
-    "name": "College man (Mixed)",
+    "id": "college_man_hoodie_mixed",
+    "name": "College man \u2014 Hoodie (Mixed)",
     "role": "college_man",
+    "roleName": "College man",
+    "outfit": "hoodie",
+    "outfitName": "Hoodie",
     "tone": "mixed",
-    "rig": "college_man_mixed/rig.json"
+    "rig": "college_man_hoodie_mixed/rig.json"
   },
   {
-    "id": "college_man_brown",
-    "name": "College man (Brown)",
+    "id": "college_man_hoodie_brown",
+    "name": "College man \u2014 Hoodie (Brown)",
     "role": "college_man",
+    "roleName": "College man",
+    "outfit": "hoodie",
+    "outfitName": "Hoodie",
     "tone": "brown",
-    "rig": "college_man_brown/rig.json"
+    "rig": "college_man_hoodie_brown/rig.json"
   },
   {
-    "id": "college_woman_beige",
-    "name": "College woman (Beige)",
+    "id": "college_man_suit_m_beige",
+    "name": "College man \u2014 Suit (Beige)",
+    "role": "college_man",
+    "roleName": "College man",
+    "outfit": "suit_m",
+    "outfitName": "Suit",
+    "tone": "beige",
+    "rig": "college_man_suit_m_beige/rig.json"
+  },
+  {
+    "id": "college_man_suit_m_mixed",
+    "name": "College man \u2014 Suit (Mixed)",
+    "role": "college_man",
+    "roleName": "College man",
+    "outfit": "suit_m",
+    "outfitName": "Suit",
+    "tone": "mixed",
+    "rig": "college_man_suit_m_mixed/rig.json"
+  },
+  {
+    "id": "college_man_suit_m_brown",
+    "name": "College man \u2014 Suit (Brown)",
+    "role": "college_man",
+    "roleName": "College man",
+    "outfit": "suit_m",
+    "outfitName": "Suit",
+    "tone": "brown",
+    "rig": "college_man_suit_m_brown/rig.json"
+  },
+  {
+    "id": "college_man_jersey_beige",
+    "name": "College man \u2014 Athletic (Beige)",
+    "role": "college_man",
+    "roleName": "College man",
+    "outfit": "jersey",
+    "outfitName": "Athletic",
+    "tone": "beige",
+    "rig": "college_man_jersey_beige/rig.json"
+  },
+  {
+    "id": "college_man_jersey_mixed",
+    "name": "College man \u2014 Athletic (Mixed)",
+    "role": "college_man",
+    "roleName": "College man",
+    "outfit": "jersey",
+    "outfitName": "Athletic",
+    "tone": "mixed",
+    "rig": "college_man_jersey_mixed/rig.json"
+  },
+  {
+    "id": "college_man_jersey_brown",
+    "name": "College man \u2014 Athletic (Brown)",
+    "role": "college_man",
+    "roleName": "College man",
+    "outfit": "jersey",
+    "outfitName": "Athletic",
+    "tone": "brown",
+    "rig": "college_man_jersey_brown/rig.json"
+  },
+  {
+    "id": "college_woman_campus_f_beige",
+    "name": "College woman \u2014 Campus (Beige)",
     "role": "college_woman",
+    "roleName": "College woman",
+    "outfit": "campus_f",
+    "outfitName": "Campus",
     "tone": "beige",
-    "rig": "college_woman_beige/rig.json"
+    "rig": "college_woman_campus_f_beige/rig.json"
   },
   {
-    "id": "college_woman_mixed",
-    "name": "College woman (Mixed)",
+    "id": "college_woman_campus_f_mixed",
+    "name": "College woman \u2014 Campus (Mixed)",
     "role": "college_woman",
+    "roleName": "College woman",
+    "outfit": "campus_f",
+    "outfitName": "Campus",
     "tone": "mixed",
-    "rig": "college_woman_mixed/rig.json"
+    "rig": "college_woman_campus_f_mixed/rig.json"
   },
   {
-    "id": "college_woman_brown",
-    "name": "College woman (Brown)",
+    "id": "college_woman_campus_f_brown",
+    "name": "College woman \u2014 Campus (Brown)",
     "role": "college_woman",
+    "roleName": "College woman",
+    "outfit": "campus_f",
+    "outfitName": "Campus",
     "tone": "brown",
-    "rig": "college_woman_brown/rig.json"
+    "rig": "college_woman_campus_f_brown/rig.json"
   },
   {
-    "id": "boy_beige",
-    "name": "Boy (Beige)",
+    "id": "college_woman_suit_f_beige",
+    "name": "College woman \u2014 Suit (Beige)",
+    "role": "college_woman",
+    "roleName": "College woman",
+    "outfit": "suit_f",
+    "outfitName": "Suit",
+    "tone": "beige",
+    "rig": "college_woman_suit_f_beige/rig.json"
+  },
+  {
+    "id": "college_woman_suit_f_mixed",
+    "name": "College woman \u2014 Suit (Mixed)",
+    "role": "college_woman",
+    "roleName": "College woman",
+    "outfit": "suit_f",
+    "outfitName": "Suit",
+    "tone": "mixed",
+    "rig": "college_woman_suit_f_mixed/rig.json"
+  },
+  {
+    "id": "college_woman_suit_f_brown",
+    "name": "College woman \u2014 Suit (Brown)",
+    "role": "college_woman",
+    "roleName": "College woman",
+    "outfit": "suit_f",
+    "outfitName": "Suit",
+    "tone": "brown",
+    "rig": "college_woman_suit_f_brown/rig.json"
+  },
+  {
+    "id": "college_woman_jersey_beige",
+    "name": "College woman \u2014 Athletic (Beige)",
+    "role": "college_woman",
+    "roleName": "College woman",
+    "outfit": "jersey",
+    "outfitName": "Athletic",
+    "tone": "beige",
+    "rig": "college_woman_jersey_beige/rig.json"
+  },
+  {
+    "id": "college_woman_jersey_mixed",
+    "name": "College woman \u2014 Athletic (Mixed)",
+    "role": "college_woman",
+    "roleName": "College woman",
+    "outfit": "jersey",
+    "outfitName": "Athletic",
+    "tone": "mixed",
+    "rig": "college_woman_jersey_mixed/rig.json"
+  },
+  {
+    "id": "college_woman_jersey_brown",
+    "name": "College woman \u2014 Athletic (Brown)",
+    "role": "college_woman",
+    "roleName": "College woman",
+    "outfit": "jersey",
+    "outfitName": "Athletic",
+    "tone": "brown",
+    "rig": "college_woman_jersey_brown/rig.json"
+  },
+  {
+    "id": "boy_kid_casual_b_beige",
+    "name": "Boy \u2014 Casual (Beige)",
     "role": "boy",
+    "roleName": "Boy",
+    "outfit": "kid_casual_b",
+    "outfitName": "Casual",
     "tone": "beige",
-    "rig": "boy_beige/rig.json"
+    "rig": "boy_kid_casual_b_beige/rig.json"
   },
   {
-    "id": "boy_mixed",
-    "name": "Boy (Mixed)",
+    "id": "boy_kid_casual_b_mixed",
+    "name": "Boy \u2014 Casual (Mixed)",
     "role": "boy",
+    "roleName": "Boy",
+    "outfit": "kid_casual_b",
+    "outfitName": "Casual",
     "tone": "mixed",
-    "rig": "boy_mixed/rig.json"
+    "rig": "boy_kid_casual_b_mixed/rig.json"
   },
   {
-    "id": "boy_brown",
-    "name": "Boy (Brown)",
+    "id": "boy_kid_casual_b_brown",
+    "name": "Boy \u2014 Casual (Brown)",
     "role": "boy",
+    "roleName": "Boy",
+    "outfit": "kid_casual_b",
+    "outfitName": "Casual",
     "tone": "brown",
-    "rig": "boy_brown/rig.json"
+    "rig": "boy_kid_casual_b_brown/rig.json"
   },
   {
-    "id": "girl_beige",
-    "name": "Girl (Beige)",
-    "role": "girl",
+    "id": "boy_kid_school_b_beige",
+    "name": "Boy \u2014 School (Beige)",
+    "role": "boy",
+    "roleName": "Boy",
+    "outfit": "kid_school_b",
+    "outfitName": "School",
     "tone": "beige",
-    "rig": "girl_beige/rig.json"
+    "rig": "boy_kid_school_b_beige/rig.json"
   },
   {
-    "id": "girl_mixed",
-    "name": "Girl (Mixed)",
-    "role": "girl",
+    "id": "boy_kid_school_b_mixed",
+    "name": "Boy \u2014 School (Mixed)",
+    "role": "boy",
+    "roleName": "Boy",
+    "outfit": "kid_school_b",
+    "outfitName": "School",
     "tone": "mixed",
-    "rig": "girl_mixed/rig.json"
+    "rig": "boy_kid_school_b_mixed/rig.json"
   },
   {
-    "id": "girl_brown",
-    "name": "Girl (Brown)",
-    "role": "girl",
+    "id": "boy_kid_school_b_brown",
+    "name": "Boy \u2014 School (Brown)",
+    "role": "boy",
+    "roleName": "Boy",
+    "outfit": "kid_school_b",
+    "outfitName": "School",
     "tone": "brown",
-    "rig": "girl_brown/rig.json"
+    "rig": "boy_kid_school_b_brown/rig.json"
   },
   {
-    "id": "baby_beige",
-    "name": "Baby (Beige)",
-    "role": "baby",
+    "id": "boy_kid_winter_b_beige",
+    "name": "Boy \u2014 Winter coat (Beige)",
+    "role": "boy",
+    "roleName": "Boy",
+    "outfit": "kid_winter_b",
+    "outfitName": "Winter coat",
     "tone": "beige",
-    "rig": "baby_beige/rig.json"
+    "rig": "boy_kid_winter_b_beige/rig.json"
   },
   {
-    "id": "baby_mixed",
-    "name": "Baby (Mixed)",
-    "role": "baby",
+    "id": "boy_kid_winter_b_mixed",
+    "name": "Boy \u2014 Winter coat (Mixed)",
+    "role": "boy",
+    "roleName": "Boy",
+    "outfit": "kid_winter_b",
+    "outfitName": "Winter coat",
     "tone": "mixed",
-    "rig": "baby_mixed/rig.json"
+    "rig": "boy_kid_winter_b_mixed/rig.json"
   },
   {
-    "id": "baby_brown",
-    "name": "Baby (Brown)",
-    "role": "baby",
+    "id": "boy_kid_winter_b_brown",
+    "name": "Boy \u2014 Winter coat (Brown)",
+    "role": "boy",
+    "roleName": "Boy",
+    "outfit": "kid_winter_b",
+    "outfitName": "Winter coat",
     "tone": "brown",
-    "rig": "baby_brown/rig.json"
+    "rig": "boy_kid_winter_b_brown/rig.json"
   },
   {
-    "id": "priest_beige",
-    "name": "Priest (Beige)",
-    "role": "priest",
+    "id": "girl_kid_casual_g_beige",
+    "name": "Girl \u2014 Casual (Beige)",
+    "role": "girl",
+    "roleName": "Girl",
+    "outfit": "kid_casual_g",
+    "outfitName": "Casual",
     "tone": "beige",
-    "rig": "priest_beige/rig.json"
+    "rig": "girl_kid_casual_g_beige/rig.json"
   },
   {
-    "id": "priest_mixed",
-    "name": "Priest (Mixed)",
-    "role": "priest",
+    "id": "girl_kid_casual_g_mixed",
+    "name": "Girl \u2014 Casual (Mixed)",
+    "role": "girl",
+    "roleName": "Girl",
+    "outfit": "kid_casual_g",
+    "outfitName": "Casual",
     "tone": "mixed",
-    "rig": "priest_mixed/rig.json"
+    "rig": "girl_kid_casual_g_mixed/rig.json"
   },
   {
-    "id": "priest_brown",
-    "name": "Priest (Brown)",
-    "role": "priest",
+    "id": "girl_kid_casual_g_brown",
+    "name": "Girl \u2014 Casual (Brown)",
+    "role": "girl",
+    "roleName": "Girl",
+    "outfit": "kid_casual_g",
+    "outfitName": "Casual",
     "tone": "brown",
-    "rig": "priest_brown/rig.json"
+    "rig": "girl_kid_casual_g_brown/rig.json"
+  },
+  {
+    "id": "girl_kid_school_g_beige",
+    "name": "Girl \u2014 School (Beige)",
+    "role": "girl",
+    "roleName": "Girl",
+    "outfit": "kid_school_g",
+    "outfitName": "School",
+    "tone": "beige",
+    "rig": "girl_kid_school_g_beige/rig.json"
+  },
+  {
+    "id": "girl_kid_school_g_mixed",
+    "name": "Girl \u2014 School (Mixed)",
+    "role": "girl",
+    "roleName": "Girl",
+    "outfit": "kid_school_g",
+    "outfitName": "School",
+    "tone": "mixed",
+    "rig": "girl_kid_school_g_mixed/rig.json"
+  },
+  {
+    "id": "girl_kid_school_g_brown",
+    "name": "Girl \u2014 School (Brown)",
+    "role": "girl",
+    "roleName": "Girl",
+    "outfit": "kid_school_g",
+    "outfitName": "School",
+    "tone": "brown",
+    "rig": "girl_kid_school_g_brown/rig.json"
+  },
+  {
+    "id": "girl_kid_winter_g_beige",
+    "name": "Girl \u2014 Winter coat (Beige)",
+    "role": "girl",
+    "roleName": "Girl",
+    "outfit": "kid_winter_g",
+    "outfitName": "Winter coat",
+    "tone": "beige",
+    "rig": "girl_kid_winter_g_beige/rig.json"
+  },
+  {
+    "id": "girl_kid_winter_g_mixed",
+    "name": "Girl \u2014 Winter coat (Mixed)",
+    "role": "girl",
+    "roleName": "Girl",
+    "outfit": "kid_winter_g",
+    "outfitName": "Winter coat",
+    "tone": "mixed",
+    "rig": "girl_kid_winter_g_mixed/rig.json"
+  },
+  {
+    "id": "girl_kid_winter_g_brown",
+    "name": "Girl \u2014 Winter coat (Brown)",
+    "role": "girl",
+    "roleName": "Girl",
+    "outfit": "kid_winter_g",
+    "outfitName": "Winter coat",
+    "tone": "brown",
+    "rig": "girl_kid_winter_g_brown/rig.json"
+  },
+  {
+    "id": "baby_onesie_beige",
+    "name": "Baby \u2014 Onesie (Beige)",
+    "role": "baby",
+    "roleName": "Baby",
+    "outfit": "onesie",
+    "outfitName": "Onesie",
+    "tone": "beige",
+    "rig": "baby_onesie_beige/rig.json"
+  },
+  {
+    "id": "baby_onesie_mixed",
+    "name": "Baby \u2014 Onesie (Mixed)",
+    "role": "baby",
+    "roleName": "Baby",
+    "outfit": "onesie",
+    "outfitName": "Onesie",
+    "tone": "mixed",
+    "rig": "baby_onesie_mixed/rig.json"
+  },
+  {
+    "id": "baby_onesie_brown",
+    "name": "Baby \u2014 Onesie (Brown)",
+    "role": "baby",
+    "roleName": "Baby",
+    "outfit": "onesie",
+    "outfitName": "Onesie",
+    "tone": "brown",
+    "rig": "baby_onesie_brown/rig.json"
+  },
+  {
+    "id": "baby_pyjamas_beige",
+    "name": "Baby \u2014 Pyjamas (Beige)",
+    "role": "baby",
+    "roleName": "Baby",
+    "outfit": "pyjamas",
+    "outfitName": "Pyjamas",
+    "tone": "beige",
+    "rig": "baby_pyjamas_beige/rig.json"
+  },
+  {
+    "id": "baby_pyjamas_mixed",
+    "name": "Baby \u2014 Pyjamas (Mixed)",
+    "role": "baby",
+    "roleName": "Baby",
+    "outfit": "pyjamas",
+    "outfitName": "Pyjamas",
+    "tone": "mixed",
+    "rig": "baby_pyjamas_mixed/rig.json"
+  },
+  {
+    "id": "baby_pyjamas_brown",
+    "name": "Baby \u2014 Pyjamas (Brown)",
+    "role": "baby",
+    "roleName": "Baby",
+    "outfit": "pyjamas",
+    "outfitName": "Pyjamas",
+    "tone": "brown",
+    "rig": "baby_pyjamas_brown/rig.json"
+  },
+  {
+    "id": "priest_cassock_beige",
+    "name": "Priest \u2014 Cassock (Beige)",
+    "role": "priest",
+    "roleName": "Priest",
+    "outfit": "cassock",
+    "outfitName": "Cassock",
+    "tone": "beige",
+    "rig": "priest_cassock_beige/rig.json"
+  },
+  {
+    "id": "priest_cassock_mixed",
+    "name": "Priest \u2014 Cassock (Mixed)",
+    "role": "priest",
+    "roleName": "Priest",
+    "outfit": "cassock",
+    "outfitName": "Cassock",
+    "tone": "mixed",
+    "rig": "priest_cassock_mixed/rig.json"
+  },
+  {
+    "id": "priest_cassock_brown",
+    "name": "Priest \u2014 Cassock (Brown)",
+    "role": "priest",
+    "roleName": "Priest",
+    "outfit": "cassock",
+    "outfitName": "Cassock",
+    "tone": "brown",
+    "rig": "priest_cassock_brown/rig.json"
+  },
+  {
+    "id": "priest_vestment_beige",
+    "name": "Priest \u2014 Vestment (Beige)",
+    "role": "priest",
+    "roleName": "Priest",
+    "outfit": "vestment",
+    "outfitName": "Vestment",
+    "tone": "beige",
+    "rig": "priest_vestment_beige/rig.json"
+  },
+  {
+    "id": "priest_vestment_mixed",
+    "name": "Priest \u2014 Vestment (Mixed)",
+    "role": "priest",
+    "roleName": "Priest",
+    "outfit": "vestment",
+    "outfitName": "Vestment",
+    "tone": "mixed",
+    "rig": "priest_vestment_mixed/rig.json"
+  },
+  {
+    "id": "priest_vestment_brown",
+    "name": "Priest \u2014 Vestment (Brown)",
+    "role": "priest",
+    "roleName": "Priest",
+    "outfit": "vestment",
+    "outfitName": "Vestment",
+    "tone": "brown",
+    "rig": "priest_vestment_brown/rig.json"
+  },
+  {
+    "id": "priest_clerical_beige",
+    "name": "Priest \u2014 Clerical shirt (Beige)",
+    "role": "priest",
+    "roleName": "Priest",
+    "outfit": "clerical",
+    "outfitName": "Clerical shirt",
+    "tone": "beige",
+    "rig": "priest_clerical_beige/rig.json"
+  },
+  {
+    "id": "priest_clerical_mixed",
+    "name": "Priest \u2014 Clerical shirt (Mixed)",
+    "role": "priest",
+    "roleName": "Priest",
+    "outfit": "clerical",
+    "outfitName": "Clerical shirt",
+    "tone": "mixed",
+    "rig": "priest_clerical_mixed/rig.json"
+  },
+  {
+    "id": "priest_clerical_brown",
+    "name": "Priest \u2014 Clerical shirt (Brown)",
+    "role": "priest",
+    "roleName": "Priest",
+    "outfit": "clerical",
+    "outfitName": "Clerical shirt",
+    "tone": "brown",
+    "rig": "priest_clerical_brown/rig.json"
   }
 ]

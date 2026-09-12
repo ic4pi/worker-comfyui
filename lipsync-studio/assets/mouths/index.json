@@ -24,6 +24,12 @@
     "kit": "beak/kit.json"
   },
   {
+    "id": "kid",
+    "name": "Kid (shared boy / girl)",
+    "kind": "human",
+    "kit": "kid/kit.json"
+  },
+  {
     "id": "baby",
     "name": "Baby (open / closed)",
     "kind": "simple",

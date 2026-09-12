@@ -61,6 +61,13 @@ async function buildRig(manifest, resolveSrc) {
     anchor: manifest.anchor ? manifest.anchor.slice() : null,
     // The kit this character was designed around; the UI can still override it.
     mouthKit: manifest.mouthKit || null,
+    // Bundled-cast metadata. Kept so the UI can offer the same character's
+    // other outfits; absent on imported rigs, which simply have no siblings.
+    role: manifest.role || null,
+    roleName: manifest.roleName || null,
+    outfit: manifest.outfit || null,
+    outfitName: manifest.outfitName || null,
+    tone: manifest.tone || null,
     pixelsPerUnit: manifest.pixelsPerUnit || 0,
     angles: {},
   };

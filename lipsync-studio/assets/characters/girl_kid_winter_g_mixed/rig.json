@@ -1,0 +1,65 @@
+{
+  "id": "girl_kid_winter_g_mixed",
+  "name": "Girl \u2014 Winter coat (Mixed)",
+  "role": "girl",
+  "roleName": "Girl",
+  "outfit": "kid_winter_g",
+  "outfitName": "Winter coat",
+  "tone": "mixed",
+  "heightUnits": 1.26,
+  "anchor": [
+    256,
+    1000
+  ],
+  "mouthKit": "kid",
+  "angles": {
+    "front": {
+      "body": "front/body.svg",
+      "mouth": [
+        256.0,
+        135.7
+      ],
+      "mouthSize": [
+        82.1,
+        57.1
+      ],
+      "visemes": {}
+    },
+    "three_quarter": {
+      "body": "three_quarter/body.svg",
+      "mouth": [
+        265.3,
+        135.7
+      ],
+      "mouthSize": [
+        82.1,
+        57.1
+      ],
+      "visemes": {}
+    },
+    "side": {
+      "body": "side/body.svg",
+      "mouth": [
+        271.0,
+        135.7
+      ],
+      "mouthSize": [
+        82.1,
+        57.1
+      ],
+      "visemes": {}
+    },
+    "back": {
+      "body": "back/body.svg",
+      "mouth": [
+        256.0,
+        135.7
+      ],
+      "mouthSize": [
+        82.1,
+        57.1
+      ],
+      "visemes": {}
+    }
+  }
+}

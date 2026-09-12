@@ -1,0 +1,65 @@
+{
+  "id": "elder_woman_blouse_f_mixed",
+  "name": "Older woman \u2014 Blouse & slacks (Mixed)",
+  "role": "elder_woman",
+  "roleName": "Older woman",
+  "outfit": "blouse_f",
+  "outfitName": "Blouse & slacks",
+  "tone": "mixed",
+  "heightUnits": 1.67,
+  "anchor": [
+    256,
+    1000
+  ],
+  "mouthKit": "female",
+  "angles": {
+    "front": {
+      "body": "front/body.svg",
+      "mouth": [
+        256.0,
+        104.1
+      ],
+      "mouthSize": [
+        63.0,
+        43.8
+      ],
+      "visemes": {}
+    },
+    "three_quarter": {
+      "body": "three_quarter/body.svg",
+      "mouth": [
+        263.1,
+        104.1
+      ],
+      "mouthSize": [
+        63.0,
+        43.8
+      ],
+      "visemes": {}
+    },
+    "side": {
+      "body": "side/body.svg",
+      "mouth": [
+        267.5,
+        104.1
+      ],
+      "mouthSize": [
+        63.0,
+        43.8
+      ],
+      "visemes": {}
+    },
+    "back": {
+      "body": "back/body.svg",
+      "mouth": [
+        256.0,
+        104.1
+      ],
+      "mouthSize": [
+        63.0,
+        43.8
+      ],
+      "visemes": {}
+    }
+  }
+}

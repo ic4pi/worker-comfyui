@@ -55,6 +55,11 @@ KITS = [
          fur="#b98b5e", inner="#4a1d22", teeth="#fdf6ee", tongue="#d0747a", nose="#2b2429"),
     dict(id="beak", name="Beak (bird)", kind="beak", box=(170, 140),
          upper="#e0a22c", lower="#c88a1e", inner="#7a3a34", tongue="#c4676c"),
+    # Elementary-age faces are smaller, so the mouth is scaled and simplified.
+    # Boys and girls share it - at this age the drawing is the same.
+    dict(id="kid", name="Kid (shared boy / girl)", kind="human", box=(110, 84),
+         lip="#a85a5f", inner="#521f26", teeth="#fdf6ee", tongue="#c97b80",
+         wide=0.82, tall=0.86, lip_thickness=6),
     # Babies only ever need shut or wailing, so this kit has two real states.
     dict(id="baby", name="Baby (open / closed)", kind="simple", box=(120, 100),
          lip="#c9707a", inner="#5e2028", tongue="#d4838a"),

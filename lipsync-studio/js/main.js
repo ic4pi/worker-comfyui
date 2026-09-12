@@ -1,7 +1,8 @@
 // UI wiring for Lip Sync Studio.
 
 import {
-  createStage, loadBackdropFromUrl, loadBackdropFromFile, renderFrame,
+  createStage, loadBackdropFromUrl, loadBackdropFromFile, addBackdropLayer,
+  syncBackdropVideo, seekBackdropVideo, renderFrame,
   screenToWorld, actorAt, fitCamera, fillZoom, horizonY, bottomY,
 } from "./stage.js";
 import {
@@ -10,6 +11,7 @@ import {
 import { analyzeAudio, applyTranscript } from "./lipsync.js";
 import {
   evaluateScene, evalCamera, putKey, sortKeys, sceneDuration, followActor,
+  MOVE_TEMPLATES, CAMERA_TEMPLATES, applyTemplate,
 } from "./animate.js";
 import { recordWebM, exportPngSequence, downloadBlob } from "./record.js";
 import { loadKitIndex, loadKit } from "./mouthkit.js";
@@ -41,8 +43,9 @@ function currentCamera() {
 
 let lastPoses = [];
 
-function renderAt(t) {
+function renderAt(t, options = {}) {
   state.time = Math.min(state.duration, Math.max(0, t));
+  syncBackdropVideo(stage, state.time, options.videoPlaying ?? state.playing);
   const cam = evalCamera(state.cameraKeys, state.time, stage.camera);
   if (state.cameraKeys.length) Object.assign(stage.camera, cam);
   lastPoses = evaluateScene(stage, state.time, { holdFps: state.holdFps });
@@ -194,6 +197,12 @@ function refreshInspector() {
   $("autoAngle").checked = actor.autoAngle !== false;
   $("flip").checked = Boolean(actor.flip);
   fillKitSelect($("actorKit"), actor.mouthKitId ?? "");
+  const siblings = state.library.filter((c) => c.role === actor.rig.role);
+  const outfits = [];
+  for (const c of siblings) {
+    if (!outfits.some(([v]) => v === c.outfit)) outfits.push([c.outfit, c.outfitName || c.outfit]);
+  }
+  fillOptions($("actorOutfit"), outfits.length ? outfits : [["", "custom art"]], actor.rig.outfit || "");
   $("walkOn").checked = Boolean(actor.walk?.enabled);
   $("stepHz").value = String(actor.walk?.stepHz ?? 2.2);
   $("stepHzOut").textContent = (actor.walk?.stepHz ?? 2.2).toFixed(2);
@@ -217,6 +226,37 @@ function refreshInspector() {
     ? `${actor.audio.name} — ${actor.audio.buffer.duration.toFixed(2)}s, ${actor.track.frames.length} viseme frames`
     : "No audio on this character.";
   $("transcript").value = actor.transcript || "";
+}
+
+/** Fill a <select> from [value, label] pairs. */
+function fillOptions(select, pairs, chosen) {
+  const previous = chosen ?? select.value;
+  select.innerHTML = "";
+  for (const [value, label] of pairs) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+    select.appendChild(opt);
+  }
+  if (pairs.some(([v]) => v === previous)) select.value = previous;
+}
+
+/** Narrow the outfit and tone lists to what the chosen role offers. */
+function refreshPickers() {
+  const role = $("pickRole").value;
+  const forRole = state.library.filter((c) => c.role === role);
+  const outfits = [];
+  for (const c of forRole) {
+    if (!outfits.some(([v]) => v === c.outfit)) outfits.push([c.outfit, c.outfitName || c.outfit]);
+  }
+  fillOptions($("pickOutfit"), outfits);
+  const outfit = $("pickOutfit").value;
+  const tones = forRole.filter((c) => c.outfit === outfit).map((c) => [c.tone, c.tone]);
+  fillOptions($("pickTone"), tones);
+}
+
+function findEntry(role, outfit, tone) {
+  return state.library.find((c) => c.role === role && c.outfit === outfit && c.tone === tone);
 }
 
 function fillSelect(select, values, chosen) {
@@ -284,26 +324,14 @@ async function loadLibrary() {
     const res = await fetch("assets/characters/index.json");
     if (!res.ok) throw new Error("no library");
     state.library = await res.json();
-    const pick = $("libraryPick");
-    pick.innerHTML = "";
-    // Group by role so the tone variants sit together rather than as 30 peers.
-    const groups = new Map();
-    state.library.forEach((c, i) => {
-      const key = c.role || "characters";
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push({ ...c, index: i });
-    });
-    for (const [roleKey, members] of groups) {
-      const group = document.createElement("optgroup");
-      group.label = members[0].name.replace(/\s*\(.*\)$/, "") || roleKey;
-      for (const c of members) {
-        const opt = document.createElement("option");
-        opt.value = String(c.index);
-        opt.textContent = c.tone ? c.tone : c.name;
-        group.appendChild(opt);
-      }
-      pick.appendChild(group);
+    // Three axes beat one list of ninety: pick who, then what they wear, then
+    // skin tone. Outfits and tones are filtered to what the role actually has.
+    const roles = [];
+    for (const c of state.library) {
+      if (!roles.some((r) => r.role === c.role)) roles.push({ role: c.role, name: c.roleName || c.name });
     }
+    fillOptions($("pickRole"), roles.map((r) => [r.role, r.name]));
+    refreshPickers();
   } catch {
     $("libraryPick").innerHTML = '<option>— no bundled characters —</option>';
   }
@@ -409,9 +437,11 @@ canvas.addEventListener("wheel", (e) => {
 
 // ------------------------------------------------------------------ controls
 
+$("pickRole").addEventListener("change", refreshPickers);
+$("pickOutfit").addEventListener("change", refreshPickers);
+
 $("addFromLibrary").addEventListener("click", async () => {
-  const idx = Number($("libraryPick").value);
-  const entry = state.library[idx];
+  const entry = findEntry($("pickRole").value, $("pickOutfit").value, $("pickTone").value);
   if (!entry) return;
   status("Loading character…");
   try {
@@ -479,6 +509,27 @@ $("backdropFile").addEventListener("change", async (e) => {
   stage.backdrop = await loadBackdropFromFile(file);
   onBackdropLoaded();
   status(`Backdrop: ${file.name}.`);
+  e.target.value = "";
+});
+
+$("layerParallax").addEventListener("input", (e) => {
+  $("layerParallaxOut").textContent = Number(e.target.value).toFixed(2);
+});
+
+$("layerFile").addEventListener("change", async (e) => {
+  const file = e.target.files?.[0];
+  if (!file || !stage.backdrop) {
+    if (file) status("Load a backdrop first.", true);
+    e.target.value = "";
+    return;
+  }
+  try {
+    await addBackdropLayer(stage, file, Number($("layerParallax").value));
+    render();
+    status(`Added layer ${file.name} at depth ${$("layerParallax").value}.`);
+  } catch (err) {
+    status(err.message, true);
+  }
   e.target.value = "";
 });
 
@@ -615,6 +666,25 @@ bindActor("bobUnits", (a, el) => {
   $("bobUnitsOut").textContent = Number(el.value).toFixed(3);
 });
 
+$("actorOutfit").addEventListener("change", async (e) => {
+  const actor = state.selected;
+  if (!actor?.rig.role) return;
+  const entry = findEntry(actor.rig.role, e.target.value, actor.rig.tone);
+  if (!entry) return;
+  status("Changing outfit…");
+  try {
+    // Swap only the drawings; blocking, keys, audio and mouth kit stay put.
+    actor.rig = await loadRigFromUrl(`assets/characters/${entry.rig}`);
+    actor.name = actor.name.includes("—") ? entry.name : actor.name;
+    refreshCast();
+    refreshInspector();
+    render();
+    status(`${actor.name}: ${entry.outfitName}.`);
+  } catch (err) {
+    status(err.message, true);
+  }
+});
+
 $("tuneAngle").addEventListener("change", refreshMouthFit);
 ["mouthX", "mouthY", "mouthScale"].forEach((id) => {
   $(id).addEventListener("input", () => {
@@ -664,6 +734,29 @@ function keyCamera(t, cam) {
   refreshDuration();
   $("camInfo").textContent = `${state.cameraKeys.length} camera key${state.cameraKeys.length === 1 ? "" : "s"}`;
 }
+
+fillOptions($("moveTemplate"), MOVE_TEMPLATES.map((t) => [t.id, t.name]), "cross_right");
+fillOptions($("moveCamera"), CAMERA_TEMPLATES.map((t) => [t.id, t.name]), "none");
+
+$("applyTemplate").addEventListener("click", () => {
+  const actor = state.selected;
+  if (!actor) {
+    status("Select a character first.", true);
+    return;
+  }
+  const seconds = Math.max(0.5, Number($("moveSeconds").value) || 5);
+  const cameraKeys = applyTemplate(stage, actor, $("moveTemplate").value,
+                                   $("moveCamera").value, state.time, seconds);
+  if (cameraKeys) {
+    state.cameraKeys = cameraKeys;
+    $("camInfo").textContent = `${cameraKeys.length} camera keys (from template)`;
+  }
+  $("walkOn").checked = Boolean(actor.walk?.enabled);
+  $("keyInfo").textContent = `${actor.keys.length} position keys`;
+  refreshDuration();
+  render();
+  status(`${actor.name}: ${$("moveTemplate").selectedOptions[0].textContent.toLowerCase()}.`);
+});
 
 $("camKey").addEventListener("click", () => keyCamera(state.time, stage.camera));
 $("camClear").addEventListener("click", () => {
@@ -756,7 +849,7 @@ $("recordWebm").addEventListener("click", async () => {
       audioSources: stage.actors
         .filter((a) => a.audio)
         .map((a) => ({ buffer: a.audio.buffer, offset: a.audioOffset || 0 })),
-      renderAt,
+      renderAt: (t) => renderAt(t, { videoPlaying: true }),
       onProgress: (p) => {
         $("exportProgress").value = p;
       },
@@ -778,7 +871,11 @@ $("recordPng").addEventListener("click", async () => {
       canvas,
       duration: state.duration,
       fps: 24,
-      renderAt,
+      // Frame-exact export has to wait for each video seek to land.
+      renderAt: async (t) => {
+        await seekBackdropVideo(stage, t);
+        renderAt(t, { videoPlaying: false });
+      },
       onProgress: (p) => {
         $("exportProgress").value = p;
       },

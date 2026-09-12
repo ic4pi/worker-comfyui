@@ -1,0 +1,65 @@
+{
+  "id": "college_woman_suit_f_brown",
+  "name": "College woman \u2014 Suit (Brown)",
+  "role": "college_woman",
+  "roleName": "College woman",
+  "outfit": "suit_f",
+  "outfitName": "Suit",
+  "tone": "brown",
+  "heightUnits": 1.73,
+  "anchor": [
+    256,
+    1000
+  ],
+  "mouthKit": "female",
+  "angles": {
+    "front": {
+      "body": "front/body.svg",
+      "mouth": [
+        256.0,
+        100.0
+      ],
+      "mouthSize": [
+        60.5,
+        42.1
+      ],
+      "visemes": {}
+    },
+    "three_quarter": {
+      "body": "three_quarter/body.svg",
+      "mouth": [
+        262.8,
+        100.0
+      ],
+      "mouthSize": [
+        60.5,
+        42.1
+      ],
+      "visemes": {}
+    },
+    "side": {
+      "body": "side/body.svg",
+      "mouth": [
+        267.1,
+        100.0
+      ],
+      "mouthSize": [
+        60.5,
+        42.1
+      ],
+      "visemes": {}
+    },
+    "back": {
+      "body": "back/body.svg",
+      "mouth": [
+        256.0,
+        100.0
+      ],
+      "mouthSize": [
+        60.5,
+        42.1
+      ],
+      "visemes": {}
+    }
+  }
+}

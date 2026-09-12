@@ -1,7 +1,7 @@
 // Timeline evaluation: keyframes, the procedural walk cycle, and the "hold"
 // quantiser that gives limited animation its deliberate, choppy look.
 
-import { unitPxAt } from "./stage.js";
+import { unitPxAt, clampCamera, fillZoom } from "./stage.js";
 import { visemeAt } from "./lipsync.js";
 import { availableAngles } from "./rig.js";
 
@@ -161,4 +161,174 @@ export function followActor(actor, zoom, sampleCount = 24) {
     keys.push({ t, x: p.x, y: p.y - 200, zoom });
   }
   return keys;
+}
+
+// --- movement templates ------------------------------------------------------
+//
+// Blocking a shot by hand means dragging a character, keying it, scrubbing,
+// dragging again. These templates lay down the common moves in one click and
+// leave ordinary keyframes behind, so anything can be adjusted afterwards -
+// they are a starting point, not a special mode.
+
+/** The slice of the world the camera can currently see, in world pixels. */
+export function viewBounds(stage) {
+  const w = stage.canvas.width / stage.camera.zoom;
+  const h = stage.canvas.height / stage.camera.zoom;
+  return {
+    left: stage.camera.x - w / 2,
+    right: stage.camera.x + w / 2,
+    top: stage.camera.y - h / 2,
+    bottom: stage.camera.y + h / 2,
+    width: w,
+    height: h,
+  };
+}
+
+/** Near and far standing lines on the ground plane, clamped to the shot. */
+function groundBand(stage) {
+  const hy = stage.backdrop ? stage.backdrop.height * stage.backdrop.horizon : stage.canvas.height * 0.62;
+  const by = stage.backdrop ? stage.backdrop.height : stage.canvas.height;
+  const view = viewBounds(stage);
+  return {
+    near: Math.min(by - (by - hy) * 0.04, view.bottom - view.height * 0.06),
+    far: hy + (by - hy) * 0.14,
+  };
+}
+
+function at(t, x, y) {
+  return { t, x, y };
+}
+
+export const MOVE_TEMPLATES = [
+  {
+    id: "idle",
+    name: "Stand still",
+    build: ({ stage, actor, start }) => {
+      const here = sampleKeys(actor.keys, start, ["x", "y"]) || { x: viewBounds(stage).left, y: groundBand(stage).near };
+      return { keys: [at(start, here.x, here.y)], walk: false };
+    },
+  },
+  {
+    id: "cross_right",
+    name: "Walk across → right",
+    build: ({ stage, actor, start, seconds }) => {
+      const v = viewBounds(stage);
+      const y = (sampleKeys(actor.keys, start, ["x", "y"]) || {}).y ?? groundBand(stage).near;
+      const pad = v.width * 0.18;
+      return { keys: [at(start, v.left - pad, y), at(start + seconds, v.right + pad, y)], walk: true };
+    },
+  },
+  {
+    id: "cross_left",
+    name: "Walk across ← left",
+    build: ({ stage, actor, start, seconds }) => {
+      const v = viewBounds(stage);
+      const y = (sampleKeys(actor.keys, start, ["x", "y"]) || {}).y ?? groundBand(stage).near;
+      const pad = v.width * 0.18;
+      return { keys: [at(start, v.right + pad, y), at(start + seconds, v.left - pad, y)], walk: true };
+    },
+  },
+  {
+    id: "enter_left",
+    name: "Enter from left, stop",
+    build: ({ stage, actor, start, seconds }) => {
+      const v = viewBounds(stage);
+      const y = (sampleKeys(actor.keys, start, ["x", "y"]) || {}).y ?? groundBand(stage).near;
+      const stop = v.left + v.width * 0.38;
+      return {
+        keys: [at(start, v.left - v.width * 0.18, y), at(start + seconds * 0.75, stop, y),
+               at(start + seconds, stop, y)],
+        walk: true,
+      };
+    },
+  },
+  {
+    id: "exit_right",
+    name: "Turn and exit right",
+    build: ({ stage, actor, start, seconds }) => {
+      const v = viewBounds(stage);
+      const here = sampleKeys(actor.keys, start, ["x", "y"]) || { x: stage.camera.x, y: groundBand(stage).near };
+      return {
+        keys: [at(start, here.x, here.y), at(start + seconds * 0.2, here.x, here.y),
+               at(start + seconds, v.right + v.width * 0.18, here.y)],
+        walk: true,
+      };
+    },
+  },
+  {
+    id: "approach",
+    name: "Walk toward camera",
+    build: ({ stage, actor, start, seconds }) => {
+      const band = groundBand(stage);
+      const x = (sampleKeys(actor.keys, start, ["x", "y"]) || {}).x ?? stage.camera.x;
+      return { keys: [at(start, x, band.far), at(start + seconds, x, band.near)], walk: true };
+    },
+  },
+  {
+    id: "depart",
+    name: "Walk away from camera",
+    build: ({ stage, actor, start, seconds }) => {
+      const band = groundBand(stage);
+      const x = (sampleKeys(actor.keys, start, ["x", "y"]) || {}).x ?? stage.camera.x;
+      return { keys: [at(start, x, band.near), at(start + seconds, x, band.far)], walk: true };
+    },
+  },
+  {
+    id: "pace",
+    name: "Pace right, then back",
+    build: ({ stage, actor, start, seconds }) => {
+      const v = viewBounds(stage);
+      const here = sampleKeys(actor.keys, start, ["x", "y"]) || { x: stage.camera.x, y: groundBand(stage).near };
+      const swing = v.width * 0.24;
+      return {
+        keys: [at(start, here.x, here.y), at(start + seconds * 0.5, here.x + swing, here.y),
+               at(start + seconds, here.x, here.y)],
+        walk: true,
+      };
+    },
+  },
+];
+
+/** Camera behaviours that can ride along with a movement template. */
+export const CAMERA_TEMPLATES = [
+  { id: "none", name: "Camera holds still" },
+  { id: "follow", name: "Camera follows them" },
+  { id: "pull_out", name: "Camera pulls out" },
+  { id: "push_in", name: "Camera pushes in" },
+  { id: "pan_with", name: "Camera pans with them (no zoom)" },
+];
+
+/**
+ * Apply a movement template to an actor, and optionally a camera move with it.
+ * Returns the camera keys to use, or null to leave the camera alone.
+ */
+export function applyTemplate(stage, actor, moveId, cameraId, start, seconds) {
+  const template = MOVE_TEMPLATES.find((t) => t.id === moveId);
+  if (!template) return null;
+  const { keys, walk } = template.build({ stage, actor, start, seconds });
+  actor.keys = sortKeys(keys.map((k) => ({ ...k })));
+  actor.walk = { ...(actor.walk || {}), enabled: walk };
+
+  const zoom = stage.camera.zoom;
+  const fitted = (keys) => keys.map((k) => ({ t: k.t, ...clampCamera(stage, k) }));
+  const { x, y } = stage.camera;
+
+  switch (cameraId) {
+    case "follow":
+      return fitted(followActor(actor, zoom));
+    case "pan_with": {
+      // Track horizontally only - vertical drift reads as a crane move.
+      const held = stage.camera.y;
+      return fitted(followActor(actor, zoom).map((k) => ({ ...k, y: held })));
+    }
+    case "pull_out":
+      // Never wider than the backdrop, or the shot grows black bars.
+      return fitted([{ t: start, x, y, zoom },
+                     { t: start + seconds, x, y, zoom: Math.max(zoom / 1.9, fillZoom(stage)) }]);
+    case "push_in":
+      return fitted([{ t: start, x, y, zoom },
+                     { t: start + seconds, x, y, zoom: zoom * 1.9 }]);
+    default:
+      return null;
+  }
 }

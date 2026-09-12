@@ -114,7 +114,7 @@ export async function exportPngSequence(opts) {
   const entries = [];
 
   for (let i = 0; i < total; i++) {
-    renderAt(i / fps);
+    await renderAt(i / fps);
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
     entries.push({
       name: `frame_${String(i).padStart(5, "0")}.png`,
