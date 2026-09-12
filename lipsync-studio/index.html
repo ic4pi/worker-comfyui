@@ -28,6 +28,15 @@
         Import character folder…
         <input type="file" id="importRig" multiple webkitdirectory directory hidden>
       </label>
+      <label class="ghost filebtn block">
+        Upgrade selected character's art…
+        <input type="file" id="upgradeRig" multiple webkitdirectory directory hidden>
+      </label>
+      <p class="hint">
+        Start with 4 front mouths (<code>closed</code>, <code>open</code>,
+        <code>wide</code>, <code>round</code>). Drop in more angles or shapes
+        later with Upgrade — placement, keys and audio are kept.
+      </p>
       <p class="hint">
         Name files <code>front_body.png</code>, <code>front_mouth_AI.png</code>,
         <code>side_body.png</code>… or include a <code>rig.json</code>.
@@ -115,6 +124,7 @@
       <h2>Selected character</h2>
       <p class="hint" id="noSelection">Nothing selected. Click a character on the stage.</p>
       <div id="inspector" hidden>
+        <p class="hint" id="coverage"></p>
         <label class="field">Name <input type="text" id="actorName"></label>
         <label class="field">Height (metres)
           <input type="number" id="actorHeight" min="0.3" max="4" step="0.01">

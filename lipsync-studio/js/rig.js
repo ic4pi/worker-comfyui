@@ -9,6 +9,9 @@
 
 import { VISEMES } from "./lipsync.js";
 
+/** The four shapes a character needs before it can talk at all. */
+export const CORE_VISEMES = ["MBP", "AI", "E", "O"];
+
 export const ANGLE_ORDER = ["front", "three_quarter", "side", "back"];
 
 const ANGLE_ALIASES = {
@@ -26,7 +29,8 @@ const VISEME_ALIASES = (() => {
   });
   Object.assign(map, {
     closed: "MBP", shut: "MBP", m: "MBP", idle: "rest", neutral: "rest",
-    open: "AI", a: "AI", wide: "E", round: "O", oo: "U", w: "WQ", f: "FV",
+    open: "AI", a: "AI", ah: "AI", wide: "E", flat: "E", ee: "E",
+    round: "O", oh: "O", oo: "U", w: "WQ", f: "FV", bite: "FV", tongue: "L",
   });
   return map;
 })();
@@ -232,4 +236,86 @@ export function mouthImage(angle, viseme) {
 /** Angles a rig actually provides, in canonical order. */
 export function availableAngles(rig) {
   return ANGLE_ORDER.filter((a) => rig.angles[a]);
+}
+
+
+// --- growing a rig over time -------------------------------------------------
+
+/**
+ * Merge a second drop of images into an existing rig. This is how a character
+ * gets upgraded: start with four front mouths, add angles and shapes later
+ * without rebuilding the character or losing its placement in the scene.
+ *
+ * New files win over old ones with the same name.
+ */
+export async function mergeRigFiles(rig, files) {
+  const { angles, skipped } = inferManifest(Array.from(files));
+  const added = [];
+  const template = rig.angles.front || rig.angles[Object.keys(rig.angles)[0]];
+
+  for (const [angleName, entry] of Object.entries(angles)) {
+    let target = rig.angles[angleName];
+
+    if (!target) {
+      if (!entry.body) {
+        skipped.push(`${angleName}: a new angle needs a body image`);
+        continue;
+      }
+      const body = await loadImage(URL.createObjectURL(entry.body));
+      // Borrow the mouth placement from an existing angle - a sane starting
+      // point the user can nudge, rather than a guess from scratch.
+      const scale = template ? body.naturalHeight / template.body.naturalHeight : 1;
+      rig.angles[angleName] = target = {
+        body,
+        mouth: template
+          ? [body.naturalWidth / 2, template.mouth[1] * scale]
+          : [body.naturalWidth / 2, body.naturalHeight * 0.29],
+        mouthSize: template
+          ? [template.mouthSize[0] * scale, template.mouthSize[1] * scale]
+          : [body.naturalWidth * 0.27, body.naturalWidth * 0.2],
+        mouthScale: template ? template.mouthScale : 1,
+        visemes: {},
+      };
+      added.push(`${angleName} body`);
+    } else if (entry.body) {
+      target.body = await loadImage(URL.createObjectURL(entry.body));
+      added.push(`${angleName} body (replaced)`);
+    }
+
+    for (const [viseme, file] of Object.entries(entry.visemes)) {
+      target.visemes[viseme] = await loadImage(URL.createObjectURL(file));
+      added.push(`${angleName}/${viseme}`);
+    }
+  }
+  return { added, skipped };
+}
+
+/**
+ * How complete a rig is, and what drawing it next. Nothing here blocks
+ * playback - a rig missing shapes falls back (see mouthImage) - it only tells
+ * the user what upgrading would buy them.
+ */
+export function rigCoverage(rig) {
+  const angles = availableAngles(rig);
+  const speaking = angles.filter((a) => a !== "back");
+  const counts = speaking.map((a) => Object.keys(rig.angles[a].visemes).length);
+  const fewest = counts.length ? Math.min(...counts) : 0;
+
+  let tier = "draft";
+  if (angles.length >= 4 && fewest >= 8) tier = "full";
+  else if (angles.length >= 3 && fewest >= 6) tier = "standard";
+  else if (angles.length >= 1 && fewest >= CORE_VISEMES.length) tier = "quick";
+
+  const next = [];
+  const missingAngles = ANGLE_ORDER.filter((a) => !rig.angles[a]);
+  if (missingAngles.length) next.push(`angles: ${missingAngles.join(", ")}`);
+  for (const a of speaking) {
+    const have = rig.angles[a].visemes;
+    const missingCore = CORE_VISEMES.filter((v) => !have[v]);
+    const missingRest = VISEMES.filter((v) => !have[v] && !CORE_VISEMES.includes(v));
+    if (missingCore.length) next.push(`${a}: core shapes ${missingCore.join(", ")}`);
+    else if (missingRest.length) next.push(`${a}: extra shapes ${missingRest.join(", ")}`);
+  }
+
+  return { tier, angles: angles.length, fewestMouths: fewest, next };
 }

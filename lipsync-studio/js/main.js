@@ -4,7 +4,9 @@ import {
   createStage, loadBackdropFromUrl, loadBackdropFromFile, renderFrame,
   screenToWorld, actorAt, fitCamera, fillZoom, horizonY, bottomY,
 } from "./stage.js";
-import { loadRigFromUrl, loadRigFromFiles, availableAngles } from "./rig.js";
+import {
+  loadRigFromUrl, loadRigFromFiles, mergeRigFiles, rigCoverage, availableAngles,
+} from "./rig.js";
 import { analyzeAudio, applyTranscript } from "./lipsync.js";
 import {
   evaluateScene, evalCamera, putKey, sortKeys, sceneDuration, followActor,
@@ -193,6 +195,12 @@ function refreshInspector() {
   fillSelect($("tuneAngle"), angles, $("tuneAngle").value && angles.includes($("tuneAngle").value) ? $("tuneAngle").value : angles[0]);
   refreshMouthFit();
 
+  const cover = rigCoverage(actor.rig);
+  const label = { draft: "Draft", quick: "Quick", standard: "Standard", full: "Full" }[cover.tier];
+  $("coverage").textContent = cover.next.length
+    ? `${label} rig — ${cover.angles} angle(s), ${cover.fewestMouths} mouth shapes. Next: ${cover.next[0]}`
+    : `${label} rig — ${cover.angles} angles, ${cover.fewestMouths} mouth shapes. Nothing missing.`;
+
   $("audioInfo").textContent = actor.audio
     ? `${actor.audio.name} — ${actor.audio.buffer.duration.toFixed(2)}s, ${actor.track.frames.length} viseme frames`
     : "No audio on this character.";
@@ -349,6 +357,29 @@ $("importRig").addEventListener("change", async (e) => {
     rig.imported = true;
     addActor(rig);
     status(skipped.length ? `Added ${rig.name}. Skipped: ${skipped.join("; ")}` : `Added ${rig.name}.`);
+  } catch (err) {
+    status(err.message, true);
+  }
+  e.target.value = "";
+});
+
+$("upgradeRig").addEventListener("change", async (e) => {
+  const files = e.target.files;
+  const actor = state.selected;
+  if (!files?.length) return;
+  if (!actor) {
+    status("Select the character to upgrade first.", true);
+    e.target.value = "";
+    return;
+  }
+  status("Merging new art…");
+  try {
+    const { added, skipped } = await mergeRigFiles(actor.rig, files);
+    refreshInspector();
+    render();
+    status(added.length
+      ? `Upgraded ${actor.name}: added ${added.length} image(s).${skipped.length ? ` Skipped: ${skipped.join("; ")}` : ""}`
+      : `Nothing to add. ${skipped.join("; ")}`);
   } catch (err) {
     status(err.message, true);
   }
