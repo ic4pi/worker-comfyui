@@ -1,0 +1,12 @@
+[
+  {
+    "id": "ava",
+    "name": "Ava",
+    "rig": "ava/rig.json"
+  },
+  {
+    "id": "miles",
+    "name": "Miles",
+    "rig": "miles/rig.json"
+  }
+]

@@ -1,0 +1,92 @@
+{
+  "id": "ava",
+  "name": "Ava",
+  "heightUnits": 1.68,
+  "anchor": [
+    256,
+    1000
+  ],
+  "angles": {
+    "front": {
+      "body": "front/body.svg",
+      "mouth": [
+        256,
+        312
+      ],
+      "mouthSize": [
+        140,
+        100
+      ],
+      "visemes": {
+        "rest": "front/mouth_rest.svg",
+        "MBP": "front/mouth_MBP.svg",
+        "FV": "front/mouth_FV.svg",
+        "TH": "front/mouth_TH.svg",
+        "L": "front/mouth_L.svg",
+        "WQ": "front/mouth_WQ.svg",
+        "E": "front/mouth_E.svg",
+        "AI": "front/mouth_AI.svg",
+        "O": "front/mouth_O.svg",
+        "U": "front/mouth_U.svg"
+      }
+    },
+    "three_quarter": {
+      "body": "three_quarter/body.svg",
+      "mouth": [
+        286,
+        314
+      ],
+      "mouthSize": [
+        140,
+        100
+      ],
+      "visemes": {
+        "rest": "three_quarter/mouth_rest.svg",
+        "MBP": "three_quarter/mouth_MBP.svg",
+        "FV": "three_quarter/mouth_FV.svg",
+        "TH": "three_quarter/mouth_TH.svg",
+        "L": "three_quarter/mouth_L.svg",
+        "WQ": "three_quarter/mouth_WQ.svg",
+        "E": "three_quarter/mouth_E.svg",
+        "AI": "three_quarter/mouth_AI.svg",
+        "O": "three_quarter/mouth_O.svg",
+        "U": "three_quarter/mouth_U.svg"
+      }
+    },
+    "side": {
+      "body": "side/body.svg",
+      "mouth": [
+        312,
+        316
+      ],
+      "mouthSize": [
+        140,
+        100
+      ],
+      "visemes": {
+        "rest": "side/mouth_rest.svg",
+        "MBP": "side/mouth_MBP.svg",
+        "FV": "side/mouth_FV.svg",
+        "TH": "side/mouth_TH.svg",
+        "L": "side/mouth_L.svg",
+        "WQ": "side/mouth_WQ.svg",
+        "E": "side/mouth_E.svg",
+        "AI": "side/mouth_AI.svg",
+        "O": "side/mouth_O.svg",
+        "U": "side/mouth_U.svg"
+      }
+    },
+    "back": {
+      "body": "back/body.svg",
+      "mouth": [
+        256,
+        312
+      ],
+      "mouthSize": [
+        140,
+        100
+      ],
+      "visemes": {}
+    }
+  }
+}

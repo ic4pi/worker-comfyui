@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lip Sync Studio</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <h1>Lip Sync Studio</h1>
+  <div class="spacer"></div>
+  <label class="toggle"><input type="checkbox" id="guides"> Guides</label>
+  <button id="saveProject" class="ghost">Save project</button>
+  <label class="ghost filebtn">Load project<input type="file" id="loadProject" accept="application/json" hidden></label>
+</header>
+
+<main class="layout">
+  <!-- ---------------------------------------------------------------- cast -->
+  <aside class="panel left">
+    <section>
+      <h2>Cast</h2>
+      <div class="row">
+        <select id="libraryPick"></select>
+        <button id="addFromLibrary">Add</button>
+      </div>
+      <label class="ghost filebtn block">
+        Import character folder…
+        <input type="file" id="importRig" multiple webkitdirectory directory hidden>
+      </label>
+      <p class="hint">
+        Name files <code>front_body.png</code>, <code>front_mouth_AI.png</code>,
+        <code>side_body.png</code>… or include a <code>rig.json</code>.
+        Angles: front, three_quarter, side, back.
+      </p>
+      <ul id="castList" class="cast"></ul>
+    </section>
+
+    <section>
+      <h2>Backdrop</h2>
+      <div class="row">
+        <button id="loadSampleBackdrop">Sample boulevard</button>
+      </div>
+      <label class="ghost filebtn block">
+        Upload a wide image…
+        <input type="file" id="backdropFile" accept="image/*" hidden>
+      </label>
+      <label class="field">Horizon
+        <input type="range" id="horizon" min="0.2" max="0.9" step="0.005" value="0.62">
+        <output id="horizonOut">0.62</output>
+      </label>
+      <label class="field">Character size at front
+        <input type="range" id="unitPx" min="40" max="900" step="5" value="300">
+        <output id="unitPxOut">300</output>
+      </label>
+      <p class="hint">Horizon sets where the ground plane vanishes — characters shrink toward it automatically.</p>
+    </section>
+
+    <section>
+      <h2>Dialogue</h2>
+      <label class="ghost filebtn block">
+        Load audio for selected character…
+        <input type="file" id="audioFile" accept="audio/*" hidden>
+      </label>
+      <label class="field">Transcript (optional, improves mouth shapes)
+        <textarea id="transcript" rows="3" placeholder="Type what they say…"></textarea>
+      </label>
+      <label class="field">Sensitivity
+        <input type="range" id="sensitivity" min="0.4" max="2.5" step="0.05" value="1">
+        <output id="sensitivityOut">1.00</output>
+      </label>
+      <label class="field">Clip start (s)
+        <input type="number" id="audioOffset" min="0" step="0.05" value="0">
+      </label>
+      <button id="reanalyze">Re-analyze</button>
+      <p class="hint" id="audioInfo">No audio loaded.</p>
+    </section>
+  </aside>
+
+  <!-- --------------------------------------------------------------- stage -->
+  <section class="stagewrap">
+    <div class="canvasbox">
+      <canvas id="stage" width="1280" height="720"></canvas>
+    </div>
+
+    <div class="transport">
+      <button id="playBtn" class="primary">Play</button>
+      <input type="range" id="scrub" min="0" max="10" step="0.01" value="0">
+      <span class="time"><span id="timeNow">0.00</span> / <span id="timeEnd">10.00</span>s</span>
+      <label class="field inline">Hold
+        <select id="holdFps">
+          <option value="0">smooth</option>
+          <option value="24">24 fps</option>
+          <option value="12" selected>12 fps (on twos)</option>
+          <option value="8">8 fps (choppy)</option>
+          <option value="6">6 fps (very choppy)</option>
+        </select>
+      </label>
+      <label class="field inline">Length
+        <input type="number" id="duration" min="1" max="600" step="0.5" value="10">
+      </label>
+    </div>
+
+    <div class="transport">
+      <button id="recordWebm">Export WebM (real time)</button>
+      <button id="recordPng">Export PNG sequence</button>
+      <progress id="exportProgress" value="0" max="1" hidden></progress>
+      <span id="status" class="status"></span>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------- inspector -->
+  <aside class="panel right">
+    <section>
+      <h2>Selected character</h2>
+      <p class="hint" id="noSelection">Nothing selected. Click a character on the stage.</p>
+      <div id="inspector" hidden>
+        <label class="field">Name <input type="text" id="actorName"></label>
+        <label class="field">Height (metres)
+          <input type="number" id="actorHeight" min="0.3" max="4" step="0.01">
+        </label>
+        <label class="field">Extra scale
+          <input type="range" id="actorScale" min="0.2" max="3" step="0.01" value="1">
+          <output id="actorScaleOut">1.00</output>
+        </label>
+        <label class="toggle"><input type="checkbox" id="autoAngle" checked> Auto angle from movement</label>
+        <label class="field">Resting angle
+          <select id="restAngle"></select>
+        </label>
+        <label class="toggle"><input type="checkbox" id="flip"> Mirror</label>
+
+        <h3>Walk</h3>
+        <label class="toggle"><input type="checkbox" id="walkOn"> Bob while moving</label>
+        <label class="field">Steps per second
+          <input type="range" id="stepHz" min="0.6" max="4" step="0.05" value="2.2">
+          <output id="stepHzOut">2.20</output>
+        </label>
+        <label class="field">Bob height
+          <input type="range" id="bobUnits" min="0" max="0.2" step="0.005" value="0.055">
+          <output id="bobUnitsOut">0.055</output>
+        </label>
+        <div class="row">
+          <button id="keyHere">Key position at playhead</button>
+          <button id="clearKeys" class="ghost">Clear keys</button>
+        </div>
+        <p class="hint" id="keyInfo"></p>
+
+        <h3>Mouth fit</h3>
+        <label class="field">Angle to tune
+          <select id="tuneAngle"></select>
+        </label>
+        <label class="field">Mouth X <input type="range" id="mouthX" min="0" max="1" step="0.002"></label>
+        <label class="field">Mouth Y <input type="range" id="mouthY" min="0" max="1" step="0.002"></label>
+        <label class="field">Mouth size
+          <input type="range" id="mouthScale" min="0.2" max="3" step="0.01" value="1">
+          <output id="mouthScaleOut">1.00</output>
+        </label>
+        <div class="row">
+          <button id="removeActor" class="danger">Remove from scene</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Camera</h2>
+      <div class="row">
+        <button id="camKey">Key camera at playhead</button>
+        <button id="camClear" class="ghost">Clear</button>
+      </div>
+      <h3>Moves</h3>
+      <div class="row wrap">
+        <button id="movePushIn">Push in</button>
+        <button id="movePullOut">Pull out</button>
+        <button id="movePanRight">Pan right</button>
+        <button id="movePanLeft">Pan left</button>
+        <button id="moveFollow">Follow selected</button>
+        <button id="moveFit" class="ghost">Fit backdrop</button>
+      </div>
+      <p class="hint">
+        Drag the stage to pan, scroll to zoom. A tight zoom that clips the edges,
+        pulled out over a few seconds, reads as walking away from camera.
+      </p>
+      <p class="hint" id="camInfo"></p>
+    </section>
+  </aside>
+</main>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
