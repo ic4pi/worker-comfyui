@@ -406,6 +406,31 @@ function fillOptions(select, pairs, chosen) {
   if (pairs.some(([v]) => v === previous)) select.value = previous;
 }
 
+/** Fill a <select> from items carrying an optional `group`, using optgroups. */
+function fillGroupedOptions(select, items, chosen) {
+  select.innerHTML = "";
+  const groups = new Map();
+  for (const item of items) {
+    const key = item.group || "";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
+  for (const [label, members] of groups) {
+    const host = label ? document.createElement("optgroup") : select;
+    if (label) {
+      host.label = label;
+      select.appendChild(host);
+    }
+    for (const item of members) {
+      const opt = document.createElement("option");
+      opt.value = item.id;
+      opt.textContent = item.name;
+      host.appendChild(opt);
+    }
+  }
+  if (chosen) select.value = chosen;
+}
+
 /** Narrow the outfit and tone lists to what the chosen role offers. */
 function refreshPickers() {
   const role = $("pickRole").value;
@@ -589,6 +614,7 @@ function newLine(actorId) {
     duration: 2,
     voice: "none",
     pitch: 0,
+    formant: 1,
     audio: null,
     rawBuffer: null,
     track: null,
@@ -648,7 +674,9 @@ function refreshLineInspector() {
   $("lineLength").value = line.duration.toFixed(2);
   $("linePitch").value = String(line.pitch || 0);
   $("linePitchOut").textContent = String(line.pitch || 0);
-  fillOptions($("lineVoice"), VOICE_PRESETS.map((v) => [v.id, v.name]), line.voice);
+  $("lineFormant").value = String(line.formant || 1);
+  $("lineFormantOut").textContent = (line.formant || 1).toFixed(2);
+  fillGroupedOptions($("lineVoice"), VOICE_PRESETS, line.voice);
   $("audioInfo").textContent = line.audio
     ? `${line.audio.name} — ${line.audio.buffer.duration.toFixed(2)}s, ${line.track?.frames.length ?? 0} viseme frames`
     : "No audio on this line. It will still hold the character's place in the script.";
@@ -1139,7 +1167,8 @@ async function loadLineAudio(line, file) {
 
 async function applyLineVoice(line) {
   if (!line.rawBuffer) return;
-  const buffer = await applyVoice(line.rawBuffer, line.voice, { pitch: line.pitch || 0 });
+  const buffer = await applyVoice(line.rawBuffer, line.voice,
+                                  { pitch: line.pitch || 0, formant: line.formant || 1 });
   line.audio = { buffer, name: line.audioName || "audio" };
   line.duration = Math.max(0.1, buffer.duration);
   analyseLine(line);
@@ -1198,6 +1227,20 @@ $("linePitch").addEventListener("change", async (e) => {
 });
 $("linePitch").addEventListener("input", (e) => {
   $("linePitchOut").textContent = String(e.target.value);
+});
+
+$("lineFormant").addEventListener("change", async (e) => {
+  const line = state.selectedLine;
+  if (!line) return;
+  line.formant = Number(e.target.value) || 1;
+  try {
+    await applyLineVoice(line);
+  } catch (err) {
+    status(err.message, true);
+  }
+});
+$("lineFormant").addEventListener("input", (e) => {
+  $("lineFormantOut").textContent = Number(e.target.value).toFixed(2);
 });
 
 $("reanalyze").addEventListener("click", () => analyseLine(state.selectedLine));

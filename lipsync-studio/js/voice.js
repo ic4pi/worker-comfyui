@@ -1,3 +1,5 @@
+import { fft, ifft, hann } from "./fft.js";
+
 // Voice filters.
 //
 // Everything here runs in the browser with no model and no network: resampling
@@ -104,6 +106,157 @@ function makeImpulse(ctx, seconds, decay) {
   return impulse;
 }
 
+// --- formant shifting --------------------------------------------------------
+//
+// Pitch and formants are different things, and moving them together is exactly
+// what makes a pitched-up man sound like a chipmunk instead of a woman. Pitch is
+// how fast the vocal folds vibrate; formants are the resonances of the vocal
+// tract, which track how long that tract is. A man's voice raised to a woman's
+// pitch still carries a man's resonances unless they are moved separately - and
+// only by about 15-20%, not by the same 7 semitones.
+//
+// The trick used here: pitch-shift by resampling (which drags the formants with
+// it), then measure the spectral envelope of the original and of the shifted
+// signal frame by frame, and re-impose the original envelope warped by exactly
+// the formant ratio asked for. Pitch ends up wherever the shift put it; the
+// resonances end up wherever we want them, independently.
+
+const FRAME = 1024;
+const HOP = FRAME / 4;
+
+/**
+ * Spectral envelope by cepstral liftering.
+ *
+ * A voiced spectrum is a smooth envelope (the vocal tract resonances) times a
+ * harmonic comb (the vocal folds). In the log domain those become a sum, and
+ * they separate cleanly by quefrency: the envelope is slow, the comb is fast.
+ * Keeping only the low quefrencies leaves the envelope on its own. Simply
+ * smoothing the magnitude - the obvious approach - blurs the resonances instead
+ * of isolating them, and the formant shift then undershoots badly.
+ */
+function cepstralEnvelope(mag, lifter, re, im) {
+  const bins = mag.length;
+  re.fill(0);
+  im.fill(0);
+  for (let k = 0; k < bins; k++) {
+    const v = Math.log(mag[k] + 1e-7);
+    re[k] = v;
+    if (k > 0 && k < bins) re[FRAME - k] = v; // real, even -> real cepstrum
+  }
+  ifft(re, im);
+  // Everything above the lifter is the harmonic comb; drop it.
+  for (let q = lifter; q <= FRAME - lifter; q++) {
+    re[q] = 0;
+    im[q] = 0;
+  }
+  fft(re, im);
+  const env = new Float32Array(bins);
+  for (let k = 0; k < bins; k++) env[k] = Math.exp(re[k]);
+  return env;
+}
+
+/** env(k / ratio) - stretching the envelope up in frequency lengthens nothing
+ *  and shortens the apparent vocal tract, which is what raises the formants. */
+function warpEnvelope(env, ratio) {
+  const out = new Float32Array(env.length);
+  for (let k = 0; k < env.length; k++) {
+    const src = k / ratio;
+    const i0 = Math.floor(src);
+    const frac = src - i0;
+    const a = env[Math.min(env.length - 1, i0)];
+    const b = env[Math.min(env.length - 1, i0 + 1)];
+    out[k] = a + (b - a) * frac;
+  }
+  return out;
+}
+
+function frameSpectrum(samples, offset, window, re, im) {
+  for (let i = 0; i < FRAME; i++) {
+    re[i] = (samples[offset + i] ?? 0) * window[i];
+    im[i] = 0;
+  }
+  fft(re, im);
+}
+
+/**
+ * Re-impose `source`'s spectral envelope, warped by `formantRatio`, onto
+ * `shifted`. Both must be the same length and time-aligned, which they are
+ * because the pitch shift preserves duration.
+ */
+function correctFormants(shifted, source, formantRatio, sampleRate) {
+  if (Math.abs(formantRatio - 1) < 0.01) return shifted;
+  const window = hann(FRAME);
+  const bins = FRAME / 2;
+  const out = new Float32Array(shifted.length);
+  const norm = new Float32Array(shifted.length);
+
+  const re = new Float32Array(FRAME);
+  const im = new Float32Array(FRAME);
+  const sre = new Float32Array(FRAME);
+  const sim = new Float32Array(FRAME);
+  const mag = new Float32Array(bins);
+  const smag = new Float32Array(bins);
+  const cre = new Float32Array(FRAME);
+  const cim = new Float32Array(FRAME);
+  // The lifter must sit below the pitch period in bins so the harmonic comb is
+  // discarded but the resonances survive; 48 clears speech down to about 60 Hz.
+  const lifter = 48;
+
+  for (let offset = 0; offset + FRAME <= shifted.length; offset += HOP) {
+    frameSpectrum(shifted, offset, window, re, im);
+    frameSpectrum(source, offset, window, sre, sim);
+    for (let k = 0; k < bins; k++) {
+      mag[k] = Math.hypot(re[k], im[k]);
+      smag[k] = Math.hypot(sre[k], sim[k]);
+    }
+    const have = cepstralEnvelope(mag, lifter, cre, cim);
+    const want = warpEnvelope(cepstralEnvelope(smag, lifter, cre, cim), formantRatio);
+
+    for (let k = 0; k < bins; k++) {
+      // Clamp the correction so a near-silent band cannot explode.
+      const gain = Math.min(8, Math.max(0.12, want[k] / (have[k] + 1e-9)));
+      re[k] *= gain;
+      im[k] *= gain;
+      if (k > 0 && k < bins) {
+        // Keep the spectrum conjugate-symmetric so the inverse stays real.
+        re[FRAME - k] *= gain;
+        im[FRAME - k] *= gain;
+      }
+    }
+
+    ifft(re, im);
+    for (let i = 0; i < FRAME; i++) {
+      out[offset + i] += re[i] * window[i];
+      norm[offset + i] += window[i] * window[i];
+    }
+  }
+
+  for (let i = 0; i < out.length; i++) {
+    out[i] = norm[i] > 1e-6 ? out[i] / norm[i] : shifted[i];
+  }
+  return out;
+}
+
+/** A little aspiration noise, shaped by the signal's own envelope. Breathiness
+ *  is a large part of what separates voices that sit at the same pitch. */
+function addBreath(samples, amount, sampleRate) {
+  if (!amount) return samples;
+  const out = new Float32Array(samples.length);
+  let follower = 0;
+  let hp = 0;
+  let prev = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const level = Math.abs(samples[i]);
+    follower += (level - follower) * (level > follower ? 0.02 : 0.0008);
+    const white = Math.random() * 2 - 1;
+    // One-pole highpass, so the noise reads as breath rather than hiss.
+    hp = 0.86 * (hp + white - prev);
+    prev = white;
+    out[i] = samples[i] + hp * follower * amount * 2.2;
+  }
+  return out;
+}
+
 /**
  * Voice presets. `pitch` is in semitones; the rest shape the timbre.
  * Deliberately few and strongly differentiated - a dozen subtle variants would
@@ -111,17 +264,43 @@ function makeImpulse(ctx, seconds, decay) {
  */
 export const VOICE_PRESETS = [
   { id: "none", name: "As recorded", params: {} },
-  { id: "deep", name: "Deep", params: { pitch: -5, lowpass: 3200, peak: [180, 5] } },
-  { id: "giant", name: "Giant", params: { pitch: -9, lowpass: 2200, peak: [110, 7], reverb: 1.4, reverbMix: 0.32 } },
-  { id: "monster", name: "Monster", params: { pitch: -7, drive: 0.45, ring: [42, 0.35], lowpass: 2600 } },
-  { id: "high", name: "Bright", params: { pitch: 3, highpass: 180, peak: [2600, 4] } },
-  { id: "child", name: "Child", params: { pitch: 6, highpass: 260, peak: [3000, 3] } },
-  { id: "chipmunk", name: "Chipmunk", params: { pitch: 10, highpass: 300 } },
-  { id: "old", name: "Elderly", params: { pitch: -2, wobble: [5.5, 0.28], bandpass: [900, 1.1] } },
-  { id: "robot", name: "Robot", params: { ring: [70, 0.75], bandpass: [1400, 2.4], drive: 0.25 } },
-  { id: "radio", name: "Radio / phone", params: { bandpass: [1700, 1.6], drive: 0.18, highpass: 420, lowpass: 3200 } },
-  { id: "whisper", name: "Whisper", params: { pitch: 1, highpass: 900, drive: 0.1, gain: 0.7 } },
-  { id: "cavern", name: "Cavernous", params: { pitch: -3, reverb: 2.6, reverbMix: 0.5, lowpass: 4000 } },
+
+  // Gender shifts. Pitch and formant move by deliberately different amounts -
+  // a shorter vocal tract is worth roughly 15-20%, nowhere near the 7 semitones
+  // the pitch moves, and matching them is what produces a chipmunk.
+  { id: "to_female", name: "Man → woman", group: "Voice change",
+    params: { pitch: 7, formant: 1.17, breath: 0.14, peak: [2800, 3] } },
+  { id: "to_female_soft", name: "Man → woman (soft)", group: "Voice change",
+    params: { pitch: 5, formant: 1.14, breath: 0.2, peak: [3200, 2], lowpass: 9000 } },
+  { id: "to_male", name: "Woman → man", group: "Voice change",
+    params: { pitch: -6, formant: 0.86, peak: [220, 3] } },
+  { id: "to_male_deep", name: "Woman → man (deep)", group: "Voice change",
+    params: { pitch: -9, formant: 0.80, peak: [170, 4], lowpass: 6500 } },
+  { id: "androgynous", name: "Androgynous", group: "Voice change",
+    params: { pitch: 2, formant: 1.05, breath: 0.1 } },
+  { id: "to_child", name: "Adult → child", group: "Voice change",
+    params: { pitch: 6, formant: 1.32, breath: 0.1, highpass: 160 } },
+  { id: "to_teen", name: "Adult → teen", group: "Voice change",
+    params: { pitch: 3, formant: 1.14, breath: 0.08 } },
+  { id: "to_elder", name: "Older", group: "Voice change",
+    params: { pitch: -1, formant: 0.95, wobble: [5.5, 0.26], breath: 0.16, bandpass: [1100, 0.9] } },
+
+  // Character voices, where the formants are meant to move with the pitch.
+  { id: "deep", name: "Deep", group: "Character", params: { pitch: -5, lowpass: 3200, peak: [180, 5] } },
+  { id: "giant", name: "Giant", group: "Character",
+    params: { pitch: -9, formant: 0.74, lowpass: 2400, peak: [110, 7], reverb: 1.4, reverbMix: 0.32 } },
+  { id: "monster", name: "Monster", group: "Character",
+    params: { pitch: -7, formant: 0.8, drive: 0.45, ring: [42, 0.35], lowpass: 2600 } },
+  { id: "bright", name: "Bright", group: "Character", params: { pitch: 3, highpass: 180, peak: [2600, 4] } },
+  { id: "chipmunk", name: "Chipmunk", group: "Character", params: { pitch: 10, highpass: 300 } },
+  { id: "robot", name: "Robot", group: "Character",
+    params: { ring: [70, 0.75], bandpass: [1400, 2.4], drive: 0.25 } },
+  { id: "radio", name: "Radio / phone", group: "Character",
+    params: { bandpass: [1700, 1.6], drive: 0.18, highpass: 420, lowpass: 3200 } },
+  { id: "whisper", name: "Whisper", group: "Character",
+    params: { pitch: 1, highpass: 900, breath: 0.5, drive: 0.1, gain: 0.7 } },
+  { id: "cavern", name: "Cavernous", group: "Character",
+    params: { pitch: -3, reverb: 2.6, reverbMix: 0.5, lowpass: 4000 } },
 ];
 
 export function voicePreset(id) {
@@ -133,13 +312,15 @@ export function voicePreset(id) {
  *
  * @param {AudioBuffer} buffer
  * @param {string} presetId
- * @param {{pitch?:number}} [overrides] - extra semitones on top of the preset
+ * @param {{pitch?:number, formant?:number}} [overrides] - extra semitones, and a
+ *   multiplier on the preset's formant ratio
  * @returns {Promise<AudioBuffer>}
  */
 export async function applyVoice(buffer, presetId, overrides = {}) {
   const preset = voicePreset(presetId);
   const p = { ...preset.params };
   if (overrides.pitch) p.pitch = (p.pitch || 0) + overrides.pitch;
+  if (overrides.formant) p.formant = (p.formant || 1) * overrides.formant;
   if (!Object.keys(p).length) return buffer;
 
   const rate = buffer.sampleRate;
@@ -147,8 +328,14 @@ export async function applyVoice(buffer, presetId, overrides = {}) {
   // Sample-domain work first: pitch, ring modulation and wobble.
   const channels = [];
   for (let c = 0; c < buffer.numberOfChannels; c++) {
-    let data = buffer.getChannelData(c).slice();
+    const source = buffer.getChannelData(c).slice();
+    let data = source;
     if (p.pitch) data = pitchShift(data, p.pitch, rate);
+    // Formant correction compares the shifted signal against the original at
+    // the same instant, which only works because the pitch shift kept the
+    // length. Do it before any ring modulation muddies the spectrum.
+    if (p.formant) data = correctFormants(data, source, p.formant, rate);
+    if (p.breath) data = addBreath(data, p.breath, rate);
     if (p.ring) data = ringMod(data, p.ring[0], p.ring[1], rate);
     if (p.wobble) data = wobble(data, p.wobble[0], p.wobble[1], rate);
     channels.push(data);

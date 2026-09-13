@@ -192,6 +192,15 @@
           <input type="range" id="linePitch" min="-12" max="12" step="1" value="0">
           <output id="linePitchOut">0</output>
         </label>
+        <label class="field">Vocal tract (formants)
+          <input type="range" id="lineFormant" min="0.72" max="1.4" step="0.01" value="1">
+          <output id="lineFormantOut">1.00</output>
+        </label>
+        <p class="hint">
+          Pitch is how high they speak; formants are the size of the throat and
+          mouth. Moving only the pitch is what makes a man sound like a chipmunk
+          instead of a woman — the gender presets move them by different amounts.
+        </p>
         <label class="field">Mouth sensitivity
           <input type="range" id="sensitivity" min="0.4" max="2.5" step="0.05" value="1">
           <output id="sensitivityOut">1.00</output>
