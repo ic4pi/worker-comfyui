@@ -1,4 +1,4 @@
-// UI wiring for Lip Sync Studio.
+// UI wiring for Backlot.
 
 import {
   createStage, loadBackdropFromUrl, loadBackdropFromFile, addBackdropLayer,
@@ -1488,8 +1488,8 @@ $("recordWebm").addEventListener("click", async () => {
         $("exportProgress").value = p;
       },
     });
-    downloadBlob(blob, "lipsync-shot.webm");
-    status("Saved lipsync-shot.webm");
+    downloadBlob(blob, "backlot-shot.webm");
+    status("Saved backlot-shot.webm");
   } catch (err) {
     status(err.message, true);
   }
@@ -1514,8 +1514,8 @@ $("recordPng").addEventListener("click", async () => {
         $("exportProgress").value = p;
       },
     });
-    downloadBlob(blob, "lipsync-frames.zip");
-    status("Saved lipsync-frames.zip");
+    downloadBlob(blob, "backlot-frames.zip");
+    status("Saved backlot-frames.zip");
   } catch (err) {
     status(err.message, true);
   }
@@ -1562,10 +1562,10 @@ $("saveProject").addEventListener("click", () => {
       track: a.track,
     })),
   };
-  downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }), "lipsync-project.json");
+  downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }), "backlot-project.json");
   status(imported.length
     ? `Saved. Imported art is not embedded — re-import folders for: ${imported.join(", ")}`
-    : "Saved lipsync-project.json");
+    : "Saved backlot-project.json");
 });
 
 $("loadProject").addEventListener("change", async (e) => {

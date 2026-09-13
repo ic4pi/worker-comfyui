@@ -1,4 +1,4 @@
-# Lip Sync Studio
+# Backlot
 
 A browser-based 2D animation studio for lip-synced webisodes. Plan a scene,
 block the movement, light it, letter it, export it. No build step, no server
@@ -12,7 +12,7 @@ Opening `index.html` from the file system will not work.
 **Locally, with Python** (already installed on macOS and Linux):
 
 ```sh
-cd lipsync-studio
+cd backlot
 python3 -m http.server 8000
 ```
 
@@ -21,15 +21,15 @@ Then open <http://localhost:8000>.
 **Locally, with Node:**
 
 ```sh
-cd lipsync-studio
+cd backlot
 npx serve
 ```
 
 **Hosting it for free.** Everything is static, so any static host works:
 
 - **GitHub Pages** — repository Settings → Pages → deploy from branch `main`,
-  folder `/`. The app is then at `https://<user>.github.io/<repo>/lipsync-studio/`.
-- **Netlify / Cloudflare Pages / Vercel** — drag the `lipsync-studio` folder in,
+  folder `/`. The app is then at `https://<user>.github.io/<repo>/backlot/`.
+- **Netlify / Cloudflare Pages / Vercel** — drag the `backlot` folder in,
   or point them at the repo with that folder as the publish directory.
 
 Use Chrome or Edge. Firefox and Safari render fine but their WebM recording
