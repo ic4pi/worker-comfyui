@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lip Sync Studio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2315171c'/%3E%3Cellipse cx='16' cy='17' rx='9' ry='7' fill='%23b0555f'/%3E%3Cellipse cx='16' cy='17' rx='6' ry='4.5' fill='%2357202a'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <h1>Lip Sync Studio</h1>
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="script">Script</button>
+    <button class="tab" data-tab="character">Character</button>
+    <button class="tab" data-tab="shot">Shot &amp; FX</button>
+  </nav>
+  <div class="spacer"></div>
+  <label class="toggle"><input type="checkbox" id="guides"> Guides</label>
+  <button id="saveProject" class="ghost">Save project</button>
+  <label class="ghost filebtn">Load project<input type="file" id="loadProject" accept="application/json" hidden></label>
+</header>
+
+<main class="layout">
+  <aside class="panel left">
+    <!-- =============================================== SCRIPT TAB (left) -->
+    <section data-tab="script">
+      <h2>Scene</h2>
+      <label class="field">Title <input type="text" id="sceneTitle" placeholder="Scene 1"></label>
+      <div class="row"><button id="loadSampleBackdrop2">Sample boulevard</button></div>
+      <label class="ghost filebtn block">
+        Where it takes place (image or video)…
+        <input type="file" id="backdropFile2" accept="image/*,video/*" hidden>
+      </label>
+      <p class="hint" id="sceneInfo">Plan the scene first — who is in it, when they are on screen, and what they say. Block the movement afterwards.</p>
+    </section>
+
+    <section data-tab="script">
+      <h2>Who is in it</h2>
+      <label class="field">Character <select id="pickRole"></select></label>
+      <label class="field">Outfit <select id="pickOutfit"></select></label>
+      <label class="field">Skin tone <select id="pickTone"></select></label>
+      <div class="row"><button id="addFromLibrary" class="primary">Add to scene</button></div>
+      <label class="field">Default mouth kit for new characters
+        <select id="defaultKit"></select>
+      </label>
+      <label class="ghost filebtn block">
+        Import character folder…
+        <input type="file" id="importRig" multiple webkitdirectory directory hidden>
+      </label>
+      <label class="ghost filebtn block">
+        Upgrade selected character's art…
+        <input type="file" id="upgradeRig" multiple webkitdirectory directory hidden>
+      </label>
+      <ul id="castList" class="cast"></ul>
+      <h3>On screen</h3>
+      <div class="row">
+        <button id="presenceEnter">Enter here</button>
+        <button id="presenceExit">Exit here</button>
+      </div>
+      <div class="row"><button id="presenceAlways" class="ghost">Always on screen</button></div>
+      <p class="hint" id="presenceInfo">Always on screen.</p>
+    </section>
+
+    <section data-tab="script">
+      <h2>What they say</h2>
+      <div class="row"><button id="addLine" class="primary">Add line at playhead</button></div>
+      <ul id="lineList" class="cast"></ul>
+      <p class="hint" id="lineInfo">No dialogue yet.</p>
+    </section>
+
+    <section data-tab="script">
+      <h2>Camera plan</h2>
+      <label class="field">From playhead, camera
+        <select id="segMode"></select>
+      </label>
+      <label class="field">Follows <select id="segTarget"></select></label>
+      <div class="row">
+        <button id="addSegment">Add camera change</button>
+        <button id="clearSegments" class="ghost">Clear</button>
+      </div>
+      <p class="hint" id="segInfo">No camera plan — manual keyframes are in charge.</p>
+    </section>
+
+    <!-- ============================================ CHARACTER TAB (left) -->
+    <section data-tab="character">
+      <h2>Cast</h2>
+      <ul id="castList2" class="cast"></ul>
+      <p class="hint">
+        Add characters on the Script tab. Here you fit their art, mouths and walk.
+      </p>
+      <p class="hint">
+        Imported art: name files <code>front_body.png</code>,
+        <code>front_mouth_AI.png</code>, <code>side_body.png</code>… or include a
+        <code>rig.json</code>. Angles: front, three_quarter, side, back.
+      </p>
+    </section>
+
+    <!-- ================================================= SHOT TAB (left) -->
+    <section data-tab="shot" hidden>
+      <h2>Backdrop</h2>
+      <div class="row"><button id="loadSampleBackdrop">Sample boulevard</button></div>
+      <label class="ghost filebtn block">
+        Upload a wide image or video…
+        <input type="file" id="backdropFile" accept="image/*,video/*" hidden>
+      </label>
+      <label class="ghost filebtn block">
+        Add a parallax layer…
+        <input type="file" id="layerFile" accept="image/*,video/*" hidden>
+      </label>
+      <label class="field">New layer depth
+        <input type="range" id="layerParallax" min="0.1" max="1" step="0.05" value="0.5">
+        <output id="layerParallaxOut">0.50</output>
+      </label>
+      <label class="field">Horizon
+        <input type="range" id="horizon" min="0.2" max="0.9" step="0.005" value="0.62">
+        <output id="horizonOut">0.62</output>
+      </label>
+      <label class="field">Character size at front
+        <input type="range" id="unitPx" min="40" max="900" step="5" value="300">
+        <output id="unitPxOut">300</output>
+      </label>
+      <p class="hint">Horizon sets where the ground plane vanishes — characters shrink toward it automatically.</p>
+    </section>
+
+    <section data-tab="shot" hidden>
+      <h2>Add effect at playhead</h2>
+      <div id="fxButtons"></div>
+      <label class="ghost filebtn block">
+        Upload a sound effect…
+        <input type="file" id="sfxFile" accept="audio/*" hidden>
+      </label>
+    </section>
+
+    <section data-tab="shot" hidden>
+      <h2>Effect track</h2>
+      <ul id="fxList" class="cast"></ul>
+      <p class="hint" id="fxInfo">No effects yet.</p>
+    </section>
+  </aside>
+
+  <!-- ---------------------------------------------------------- stage -->
+  <section class="stagewrap">
+    <div class="canvasbox"><canvas id="stage" width="1280" height="720"></canvas></div>
+
+    <div class="timelinebox"><canvas id="timeline"></canvas></div>
+
+    <div class="transport">
+      <button id="playBtn" class="primary">Play</button>
+      <input type="range" id="scrub" min="0" max="10" step="0.01" value="0">
+      <span class="time"><span id="timeNow">0.00</span> / <span id="timeEnd">10.00</span>s</span>
+      <label class="field inline">Hold
+        <select id="holdFps">
+          <option value="0">smooth</option>
+          <option value="24">24 fps</option>
+          <option value="12" selected>12 fps (on twos)</option>
+          <option value="8">8 fps (choppy)</option>
+          <option value="6">6 fps (very choppy)</option>
+        </select>
+      </label>
+      <label class="field inline">Length
+        <input type="number" id="duration" min="1" max="600" step="0.5" value="10">
+      </label>
+    </div>
+
+    <div class="transport">
+      <button id="recordWebm">Export WebM (real time)</button>
+      <button id="recordPng">Export PNG sequence</button>
+      <progress id="exportProgress" value="0" max="1" hidden></progress>
+      <span id="status" class="status"></span>
+    </div>
+  </section>
+
+  <aside class="panel right">
+    <!-- ============================================== SCRIPT TAB (right) -->
+    <section data-tab="script">
+      <h2>Selected line</h2>
+      <p class="hint" id="noLineSelection">Nothing selected. Add a line, or click one on the timeline.</p>
+      <div id="lineInspector" hidden>
+        <label class="field">Who speaks <select id="lineActor"></select></label>
+        <label class="field">What they say
+          <textarea id="lineText" rows="3" placeholder="Type the line…"></textarea>
+        </label>
+        <label class="field">Start (s) <input type="number" id="lineStart" min="0" step="0.05"></label>
+        <label class="field">Length (s) <input type="number" id="lineLength" min="0.1" step="0.05"></label>
+        <label class="ghost filebtn block">
+          Load audio for this line…
+          <input type="file" id="lineAudio" accept="audio/*" hidden>
+        </label>
+        <label class="field">Voice filter <select id="lineVoice"></select></label>
+        <label class="field">Extra pitch (semitones)
+          <input type="range" id="linePitch" min="-12" max="12" step="1" value="0">
+          <output id="linePitchOut">0</output>
+        </label>
+        <label class="field">Vocal tract (formants)
+          <input type="range" id="lineFormant" min="0.72" max="1.4" step="0.01" value="1">
+          <output id="lineFormantOut">1.00</output>
+        </label>
+        <p class="hint">
+          Pitch is how high they speak; formants are the size of the throat and
+          mouth. Moving only the pitch is what makes a man sound like a chipmunk
+          instead of a woman — the gender presets move them by different amounts.
+        </p>
+        <label class="field">Mouth sensitivity
+          <input type="range" id="sensitivity" min="0.4" max="2.5" step="0.05" value="1">
+          <output id="sensitivityOut">1.00</output>
+        </label>
+        <div class="row">
+          <button id="reanalyze">Re-analyze</button>
+          <button id="deleteLine" class="danger">Delete</button>
+        </div>
+        <p class="hint" id="audioInfo">No audio on this line.</p>
+      </div>
+    </section>
+
+    <!-- =========================================== CHARACTER TAB (right) -->
+    <section data-tab="character">
+      <h2>Selected character</h2>
+      <p class="hint" id="noSelection">Nothing selected. Click a character on the stage.</p>
+      <div id="inspector" hidden>
+        <p class="hint" id="coverage"></p>
+        <label class="field">Name <input type="text" id="actorName"></label>
+        <label class="field">Height (metres)
+          <input type="number" id="actorHeight" min="0.3" max="4" step="0.01">
+        </label>
+        <label class="field">Extra scale
+          <input type="range" id="actorScale" min="0.2" max="3" step="0.01" value="1">
+          <output id="actorScaleOut">1.00</output>
+        </label>
+        <label class="toggle"><input type="checkbox" id="autoAngle" checked> Auto angle from movement</label>
+        <label class="toggle"><input type="checkbox" id="flip"> Mirror</label>
+        <label class="field">Mouth kit (override) <select id="actorKit"></select></label>
+        <label class="field">Outfit <select id="actorOutfit"></select></label>
+        <label class="field">Resting angle <select id="restAngle"></select></label>
+
+        <h3>Walk</h3>
+        <label class="toggle"><input type="checkbox" id="walkOn"> Bob while moving</label>
+        <label class="field">Steps per second
+          <input type="range" id="stepHz" min="0.6" max="4" step="0.05" value="2.2">
+          <output id="stepHzOut">2.20</output>
+        </label>
+        <label class="field">Bob height
+          <input type="range" id="bobUnits" min="0" max="0.2" step="0.005" value="0.055">
+          <output id="bobUnitsOut">0.055</output>
+        </label>
+        <div class="row">
+          <button id="keyHere">Key position at playhead</button>
+          <button id="clearKeys" class="ghost">Clear keys</button>
+        </div>
+        <p class="hint" id="keyInfo"></p>
+
+        <h3>Mouth fit</h3>
+        <label class="field">Angle to tune <select id="tuneAngle"></select></label>
+        <label class="field">Mouth X <input type="range" id="mouthX" min="0" max="1" step="0.002"></label>
+        <label class="field">Mouth Y <input type="range" id="mouthY" min="0" max="1" step="0.002"></label>
+        <label class="field">Mouth size
+          <input type="range" id="mouthScale" min="0.2" max="3" step="0.01" value="1">
+          <output id="mouthScaleOut">1.00</output>
+        </label>
+        <div class="row"><button id="removeActor" class="danger">Remove from scene</button></div>
+      </div>
+    </section>
+
+    <section data-tab="character">
+      <h2>Movement</h2>
+      <label class="field">Move template <select id="moveTemplate"></select></label>
+      <label class="field">Camera does <select id="moveCamera"></select></label>
+      <label class="field">Over (seconds)
+        <input type="number" id="moveSeconds" min="0.5" max="120" step="0.5" value="5">
+      </label>
+      <div class="row"><button id="applyTemplate" class="primary">Apply to selected</button></div>
+      <p class="hint">Templates just lay down ordinary keyframes — drag the character afterwards to adjust any of them.</p>
+    </section>
+
+    <!-- ================================================ SHOT TAB (right) -->
+    <section data-tab="shot" hidden>
+      <h2>Selected effect</h2>
+      <p class="hint" id="noFxSelection">Nothing selected. Add an effect, then pick it from the track.</p>
+      <div id="fxInspector" hidden>
+        <h3 id="fxTitle"></h3>
+        <label class="field">Start (s)
+          <input type="number" id="fxStart" min="0" step="0.05" value="0">
+        </label>
+        <label class="field">Length (s)
+          <input type="number" id="fxDuration" min="0.05" step="0.05" value="1">
+        </label>
+        <div id="fxParams"></div>
+        <div class="row">
+          <button id="fxDuplicate" class="ghost">Duplicate</button>
+          <button id="fxDelete" class="danger">Delete</button>
+        </div>
+      </div>
+    </section>
+
+    <section data-tab="shot" hidden>
+      <h2>Camera</h2>
+      <div class="row">
+        <button id="camKey">Key camera at playhead</button>
+        <button id="camClear" class="ghost">Clear</button>
+      </div>
+      <h3>Moves</h3>
+      <div class="row wrap">
+        <button id="movePushIn">Push in</button>
+        <button id="movePullOut">Pull out</button>
+        <button id="movePanRight">Pan right</button>
+        <button id="movePanLeft">Pan left</button>
+        <button id="moveFollow">Follow selected</button>
+        <button id="moveFit" class="ghost">Fit backdrop</button>
+      </div>
+      <p class="hint">
+        Drag the stage to pan, scroll to zoom. A tight zoom that clips the edges,
+        pulled out over a few seconds, reads as walking away from camera.
+      </p>
+      <p class="hint" id="camInfo"></p>
+    </section>
+  </aside>
+</main>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

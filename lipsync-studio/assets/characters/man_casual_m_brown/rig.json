@@ -1,0 +1,65 @@
+{
+  "id": "man_casual_m_brown",
+  "name": "Man \u2014 Casual (Brown)",
+  "role": "man",
+  "roleName": "Man",
+  "outfit": "casual_m",
+  "outfitName": "Casual",
+  "tone": "brown",
+  "heightUnits": 1.74,
+  "anchor": [
+    256,
+    1000
+  ],
+  "mouthKit": "male",
+  "angles": {
+    "front": {
+      "body": "front/body.svg",
+      "mouth": [
+        256.0,
+        101.3
+      ],
+      "mouthSize": [
+        61.3,
+        42.7
+      ],
+      "visemes": {}
+    },
+    "three_quarter": {
+      "body": "three_quarter/body.svg",
+      "mouth": [
+        262.9,
+        101.3
+      ],
+      "mouthSize": [
+        61.3,
+        42.7
+      ],
+      "visemes": {}
+    },
+    "side": {
+      "body": "side/body.svg",
+      "mouth": [
+        267.2,
+        101.3
+      ],
+      "mouthSize": [
+        61.3,
+        42.7
+      ],
+      "visemes": {}
+    },
+    "back": {
+      "body": "back/body.svg",
+      "mouth": [
+        256.0,
+        101.3
+      ],
+      "mouthSize": [
+        61.3,
+        42.7
+      ],
+      "visemes": {}
+    }
+  }
+}

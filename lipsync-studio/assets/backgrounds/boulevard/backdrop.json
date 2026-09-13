@@ -1,0 +1,20 @@
+{
+  "name": "Boulevard",
+  "width": 4096,
+  "height": 1536,
+  "horizon": 0.62,
+  "layers": [
+    {
+      "src": "far.svg",
+      "parallax": 0.25
+    },
+    {
+      "src": "mid.svg",
+      "parallax": 0.55
+    },
+    {
+      "src": "near.svg",
+      "parallax": 1.0
+    }
+  ]
+}
